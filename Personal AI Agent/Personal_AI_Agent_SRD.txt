@@ -1,0 +1,77 @@
+Software Requirements Document (SRD)
+===================================
+
+1. Project Title
+----------------
+Personal AI Agent (Auto-RAG Builder)
+
+2. Objective
+------------
+To create a fully private AI assistant that allows users to upload personal documents and ask natural language questions over their own data. The system runs entirely on local infrastructure (no external APIs or cloud services).
+
+3. Key Features
+---------------
+- Private, local processing — no third-party data sharing
+- Upload resumes, PDFs, notes, and documents
+- Ask questions using natural language
+- Retrieval-Augmented Generation pipeline (Auto-RAG)
+- User-specific namespaces in the vector DB and database
+- History of questions and answers
+
+4. Tech Stack
+-------------
+Component         | Technology
+------------------|-----------------------------
+Backend API       | FastAPI
+Database          | PostgreSQL
+Embeddings        | bge-small or MiniLM
+Vector DB         | FAISS (local)
+LLM               | Mistral 7B or Phi-2 (via Ollama or llama-cpp)
+Auth              | Basic JWT auth
+
+
+5. User Flow
+------------
+1. User signs in or registers (JWT-based)
+2. Uploads one or more documents (PDF, TXT, DOCX)
+3. System parses and stores metadata, raw text, and chunk embeddings
+4. User enters a question
+5. Backend retrieves relevant chunks from FAISS
+6. Local LLM generates a context-aware response
+7. Answer is returned and logged
+
+6. Functional Requirements
+--------------------------
+API Endpoints:
+
+Method | Route            | Description
+-------|------------------|---------------------------
+POST   | /register        | Create a new user
+POST   | /login           | Get auth token
+POST   | /upload          | Upload and process document
+POST   | /ask             | Ask question using document data
+GET    | /documents       | List uploaded documents
+GET    | /queries         | View Q&A history
+DELETE | /documents/{id}  | Delete document by ID
+
+7. Non-Functional Requirements
+------------------------------
+- All code must run inside  container (no cloud dependencies)
+- Responses must be returned under 3 seconds for small files
+- Maximum file size: 5MB
+- Secure storage of documents, no exposure between users
+- Minimal memory footprint (sub-8GB RAM target)
+
+8. Security Requirements
+------------------------
+- JWT-based auth system
+- Namespacing of FAISS vectors and metadata by user ID
+- All files stored locally in user-specific folders
+- No internet access needed after setup
+
+9. Stretch Goals
+----------------
+- File preview UI with semantic highlights
+- CLI version for offline-only usage
+- Notebook import/export
+- Multiple user roles (admin, viewer)

@@ -1,0 +1,648 @@
+{
+  "questions_with_multiple_answers": [
+    {
+      "question": "What were my expenses in January 2023?\n",
+      "answer_count": 2,
+      "answers": [
+        "Your expenses for January 2023 were $2650.",
+        "Your expenses for January 2023 were not provided in the context."
+      ]
+    },
+    {
+      "question": "what where my total expenses for March 2023?",
+      "answer_count": 2,
+      "answers": [
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "Sorry, I encountered an error while generating a response. Please try again with a different question."
+      ]
+    },
+    {
+      "question": "what is one shot prompt?",
+      "answer_count": 2,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2023?\nWhat are my technical skills?\nhow much money I spent in march?",
+      "answer_count": 3,
+      "answers": [
+        "I don't know where you went on vacation in 2023.\n\nYour technical skills are not mentioned in the provided context.\n\nYou spent $120 on transportation in March 2023.",
+        "I don't know where you went on vacation in 2023.\n\nYour technical skills are not mentioned in the provided context.\n\nYou spent $2650 in March 2023.",
+        "I don't know."
+      ]
+    },
+    {
+      "question": "how much experience do I have?",
+      "answer_count": 3,
+      "answers": [
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "You have 8 years of experience as a QA Automation Engineer.",
+        "You have 8+ years of experience in software testing across all phases of SDLC\nand STLC."
+      ]
+    },
+    {
+      "question": "How much did I spend in January 2023?",
+      "answer_count": 3,
+      "answers": [
+        "Expenses for January 2023 were not provided.",
+        "Expenses were not provided.",
+        "Your expenses for January 2023 were $2650."
+      ]
+    },
+    {
+      "question": "What is prompt engineering?",
+      "answer_count": 3,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks.",
+        "Sorry, I encountered an error while generating a response."
+      ]
+    },
+    {
+      "question": "What technical skills do I have?",
+      "answer_count": 4,
+      "answers": [
+        "You have technical skills in the following areas:\n\n1. Test Automation Frameworks: You have experience designing and maintaining test automation frameworks using Robot Framework and Selenium.\n2. Testing: You are proficient in performing Functional, Smoke, Integration, and Regression Testing.\n3. CI/CD Pipelines: You have experience integrating automation into CI/CD pipelines, using GitHub Actions.\n4. Agile Sprints: You have experience documenting test results, reporting defects, and contributing to continuous improvement of QA practices in Agile sprints.\n5. Information Technologies: You have a degree in Information Technologies from the College of Informatics in Chisinau, MD.\n\nPlease note that the context does not provide specific information about your experience with other programming languages, tools, or frameworks.",
+        "You have technical skills in the following areas:\n\n1. Test Automation Frameworks: You have experience designing and maintaining test automation frameworks using Robot Framework and Selenium.\n2. Testing: You are skilled in performing Functional, Smoke, Integration, and Regression Testing.\n3. CI/CD Pipelines: You have experience integrating automation into CI/CD pipelines, using GitHub Actions.\n4. Agile Sprints: You have experience documenting test results, reporting defects, and contributing to continuous improvement of QA practices in Agile sprints.\n5. Information Technologies: You have a degree in Information Technologies from the College of Informatics in Chisinau, MD.\n\nPlease note that the context does not provide specific information about your experience with other programming languages or tools. However, based on your work history and education, you have expertise in the areas mentioned above.",
+        "You have technical skills in the following areas:\n\n1. Test Automation Frameworks: You have experience designing and maintaining test automation frameworks using Robot Framework and Selenium.\n2. Testing: You have experience performing Functional, Smoke, Integration, and Regression Testing.\n3. CI/CD Pipelines: You have experience integrating automation into CI/CD pipelines, using GitHub Actions.\n4. Agile Sprints: You have experience documenting test results, reporting defects, and contributing to continuous improvement of QA practices in Agile sprints.\n5. Information Technologies: You have a degree in Information Technologies from the College of Informatics in Chisinau, MD.\n6. Parallel Testing: You have experience reducing test execution time by running parallel tests, achieving a time saving of about 1.5 hours.\n7. Automated Test Cases: You have experience growing automated test cases from 30% to 80%.\n8. Test Maintenance Overhead: You have experience reducing test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.",
+        "You have technical skills in the following areas:\n\n1. Test Automation Frameworks: You have experience with Robot Framework and Selenium, which are popular tools for designing and maintaining test automation frameworks.\n2. Testing: You have experience with performing Functional, Smoke, Integration, and Regression Testing, which are essential skills for ensuring software quality.\n3. CI/CD Pipelines: You have experience with integrating automation into CI/CD pipelines, which helps accelerate deployment speed and reliability.\n4. GitHub Actions: You have experience with using GitHub Actions, a popular tool for automating software development workflows.\n5. Agile Sprints: You have experience with documenting test results, reporting defects, and contributing to continuous improvement of QA practices in Agile sprints.\n6. Information Technologies: You have a degree in Information Technologies from the College of Informatics in Chisinau, MD.\n7. Time Management: You have achieved a significant reduction in regression testing time from about 5 hours to 3.5 hours, by running parallel tests.\n8. Test Maintenance: You have reduced test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.\n\nPlease note that this response is based on the information provided in the context. If you have any questions or need further clarification, please let me know."
+      ]
+    },
+    {
+      "question": "What are my technical skills?",
+      "answer_count": 2,
+      "answers": [
+        "Your technical skills include:\n\n1. Robot Framework\n2. Selenium\n3. GitHub Actions\n4. Agile sprints\n5. Continuous improvement\n\nThese skills are related to your work as a Senior QA Automation Engineer at Imprivata from April 2023 to the present. You designed and maintained a test automation framework using Robot Framework and Selenium, performed various types of testing, integrated automation into CI/CD pipelines, and contributed to continuous improvement of QA practices in Agile sprints.",
+        "Your technical skills include:\n\n1. Robot Framework\n2. Selenium\n3. GitHub Actions\n4. Agile sprints\n5. Information Technologies\n6. Time saving in regression testing\n7. Growing automated test cases\n8. Reducing test maintenance overhead\n9. Refactoring flaky test scripts\n10. Optimizing locators\n\nPlease note that this information is based on the provided context and may not be exhaustive or up-to-date."
+      ]
+    },
+    {
+      "question": "How much did I spend in March 2023?",
+      "answer_count": 3,
+      "answers": [
+        "Sorry, I encountered an error while generating a response.",
+        "You spent $2650 in March 2023.",
+        "Your expenses for March 2023 were $2650."
+      ]
+    },
+    {
+      "question": "How much money I spent in march?",
+      "answer_count": 11,
+      "answers": [
+        "Eugene spent $2480 in March 2022.",
+        "I don't know. Please provide the budget and expenses for March 2022.",
+        "I don't know. Please provide the month and year for which you want to calculate the expenses.",
+        "I don't know. The context doesn't contain information about Eugene's expenses in March 2022.",
+        "I don't know. The expenses for March 2022 are not provided in the context.",
+        "I don't know. The given information doesn't contain the expenses for March 2022.",
+        "I don't know. The information you provided does not contain the expenses for March 2022.",
+        "I don't know. The provided context only contains data for January 2022, February 2022, and March 2022.",
+        "I don't know. The provided context only contains expenses for January and February 2023, as well as some expenses from other months.",
+        "To answer your question, I need more context. Please provide the specific month and year you want to know about.",
+        "To answer your question, I need to find the total amount spent in March 2022. From the provided context, Eugene's monthly expenses for March 2022 were:\n\nGroceries: $460\nRent: $1200\nUtilities: $145\nTransportation: $130\nDining out: $210\nSubscriptions: $50\nEntertainment: $95\nClothes: $110\nMiscellaneous: $80\n\nTotal Spent: $2480"
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2023? What are my technical skills? how much money I spent in march?",
+      "answer_count": 18,
+      "answers": [
+        "PART 1:\nI went to Thailand in 2023.\n\nPART 2:\nYour technical skills are not explicitly mentioned in the provided context.\n\nPART 3:\nYou spent $2,610 in February 2023.",
+        "VACATION INFORMATION:\n\nIn 2023, you went on a vacation to Thailand - Bangkok & Phuket. You spent $1,150 on plane tickets and $480 on rental cars. Your total expenses for the trip were $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills include:\n\n* Achieved time saving in regression testing from about 5 hours to 3.5 hours, by running parallel tests.\n* Collaborated with team on growing automated test cases from 30% to 80%.\n* Reduced test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.\n\nEXPENSE INFORMATION:\n\nIn March specifically, you spent $2650 on expenses. This includes groceries ($480), rent ($1300), utilities ($160), transportation ($130), dining out ($210), subscriptions ($60), entertainment ($90), clothes ($100), and miscellaneous expenses ($120).",
+        "I don't know. The provided context does not contain information about your vacation plans in 2023, technical skills, or how much money you spent in March.",
+        "VACATION INFORMATION:\n\nIn 2023, you went on a vacation to Thailand. You visited Bangkok and Phuket from January 9th to 28th. The total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills include:\n\n* Achieving time saving in regression testing from about 5 hours to 3.5 hours, by running parallel tests.\n* Collaborating with a team on growing automated test cases from 30% to 80%.\n* Reducing test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.\n\nEXPENSE INFORMATION:\n\nUnfortunately, there is no information about expenses for March specifically.",
+        "VACATION INFORMATION:\n\nIn 2023, you went on a vacation to Thailand - Bangkok & Phuket. You stayed for 14 days and spent a total of $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills are not mentioned in the provided context.\n\nEXPENSE INFORMATION:\n\nThe expenses for March are not mentioned in the provided context.",
+        "VACATION INFORMATION:\n\nIn 2023, you went on a vacation to Thailand - Bangkok & Phuket. You stayed for 14 days and the total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills are not mentioned in the context.\n\nEXPENSE INFORMATION:\n\nThe expenses for March are not provided in the context.",
+        "I don't know. The context does not contain information about your vacation in 2023, your technical skills, or how much money you spent in March.",
+        "VACATION INFORMATION:\n\nIn 2023, you went on a vacation to Thailand - Bangkok & Phuket. You stayed for 14 days and spent a total of $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills are not mentioned in the context.\n\nEXPENSE INFORMATION:\n\nThe expenses for March are not mentioned in the context.",
+        "VACATION INFORMATION:\n\nYou went on vacation to Thailand in 2023. You visited Bangkok and Phuket, staying for 14 days. The total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\n\nYour technical skills include:\n\n* Achieved time saving in regression testing from about 5 hours to 3.5 hours, by running parallel tests.\n* Collaborated with team on growing automated test cases from 30% to 80%.\n* Reduced test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.\n\nEXPENSE INFORMATION:\n\nI don't have information about expenses specifically for March 2023.",
+        "PART 1:\nYou went to Thailand in 2023.\n\nPART 2:\nYour technical skills include programming languages, tools and frameworks, technical domains and expertise, and professional qualifications and certifications. However, the provided context does not contain specific information about these skills.\n\nPART 3:\nYou spent $2,610 in February 2023.",
+        "I went on vacation to Thailand in 2023. My technical skills include programming languages, tools and frameworks, and technical domains and expertise. I spent $2,610 in March 2024.",
+        "I don't know where you went on vacation in 2023.\n\nYour technical skills include knowledge of Java OOP and Automation tools, as well as experience with Agile project management and software testing. You have a background in QA engineering and have worked for United Airlines from March 2016 to August 2019.\n\nYou spent $3200 on expenses in January 2023. I don't know how much money you spent in March.",
+        "I went on vacation to Canada \u2013 Vancouver & Whistler in 2021. My technical skills include Java OOP and Automation tools. I spent $3200 in January 2023.",
+        "PART 1:\nI went to Thailand in 2023.\n\nPART 2:\nYour technical skills include programming languages, tools and frameworks, technical domains and expertise, and professional qualifications and certifications. However, the provided context does not contain specific information about these skills.\n\nPART 3:\nYou spent $2,610 in February 2023.",
+        "I don't know where you went on vacation in 2023.\n\nYour technical skills are not mentioned in the provided context.\n\nYou spent $2650 in March 2023.",
+        "PART 1: In 2023, you went on vacation to Thailand, specifically to Bangkok and Phuket.\n\nPART 2: Your technical skills include programming languages like Python, Java, and JavaScript. You also have expertise in web development and machine learning. Additionally, you have professional qualifications and certifications.\n\nPART 3: In March 2023, you spent $2,610 on expenses.",
+        "PART 1: In 2023, you went on vacation to Thailand, specifically to Bangkok and Phuket.\n\nPART 2: Your technical skills include programming languages such as Python, Java, and JavaScript. You also have expertise in web development and machine learning. Additionally, you have professional qualifications and certifications.\n\nPART 3: In March 2023, you spent $2,610 on expenses.",
+        "I don't know. The provided context does not contain information about a vacation in 2023, technical skills, or how much money was spent in March."
+      ]
+    },
+    {
+      "question": "how much money does Eugene have?\n\n",
+      "answer_count": 2,
+      "answers": [
+        "Based on the given context, there is no information provided about Eugene's money. You might want to ask for more details or specify who you are referring to in order to get an accurate answer.",
+        "Eugene has $12.25."
+      ]
+    },
+    {
+      "question": "What is that I'm doing for work?\n\n",
+      "answer_count": 2,
+      "answers": [
+        "The information provided in the context doesn't mention anything about your work, so it's unclear what you are doing for work.",
+        "You are working on a document about Paris, which is the capital city of France. The document highlights some key features of Paris, such as its most famous landmark, the Eiffel Tower."
+      ]
+    },
+    {
+      "question": "What were my expenses in February 2023?",
+      "answer_count": 3,
+      "answers": [
+        "Your expenses for February 2023 were $0.",
+        "Your expenses for February 2023 were $2610.\n\nExpenses:\n- Groceries: $500\n- Rent: $1300\n- Utilities: $150\n- Transportation: $120\n- Dining out: $190\n- Subscriptions: $60\n- Entertainment: $110\n- Clothes: $80\n- Miscellaneous: $100",
+        "Your expenses for February 2023 were $2850."
+      ]
+    },
+    {
+      "question": "how much money does Eugene have ?\nwhat is the annual salary?\nwhat is Olga's last name",
+      "answer_count": 3,
+      "answers": [
+        "Eugene has $12.25\nOlga's last name is Mazura",
+        "Eugene has $12.25\nThe annual salary is $95,000\nOlga's last name is Mazura",
+        "Eugene has $12.25.\nThe annual salary is not specified in the given information.\nOlga's last name is Mazura."
+      ]
+    },
+    {
+      "question": "how much money I spent in march 2023?",
+      "answer_count": 5,
+      "answers": [
+        "I don't have enough information to answer that question. The context does not provide specific information about expenses in March 2023.",
+        "Your expenses for March 2023 were $3140.",
+        "$2650",
+        "Your expenses for March 2023 were $2650.",
+        "Sorry, I encountered an error while generating an answer."
+      ]
+    },
+    {
+      "question": "what where my total expenses for December 2023?\n\n\n",
+      "answer_count": 5,
+      "answers": [
+        "December 2023 had a budget of $3500. From the given data, we can calculate that Eugene spent:\n- Groceries: $500\n- Rent: $1300\n- Utilities: $170\n- Transportation: $130\n- Dining out: $200\n- Subscriptions: $50\n- Entertainment: $100\n- Clothes: $90\n- Miscellaneous: $120\n\nTotal expenses for December 2023 would be $3240.",
+        "To calculate the total expenses for December 2023, you need to add up all the expenses from each category. \n\nLet's break down the information provided:\n- Groceries: $500\n- Rent: $1300\n- Utilities: $150\n- Transportation: $120\n- Dining out: $200\n- Subscriptions: $70\n- Entertainment: $100\n- Clothes: $80\n- Miscellaneous: $90\n\nTotal expenses for December 2023 = Groceries + Rent + Utilities + Transportation + Dining out + Subscriptions + Entertainment + Clothes + Miscellaneous\n                                                                                 = $500 + $1300 + $150 + $120 + $200 + $70 + $100 + $80 + $90 \n                                                                                 = $2520\n\nSo, your total expenses for December 2023 are $2,520.",
+        "To find your total expenses for December 2023, you will need to add up all the individual amounts spent in each category. Here is a breakdown:\n\n1. Groceries: $500\n2. Rent: $1300\n3. Utilities: $150\n4. Transportation: $120\n5. Dining out: $190\n6. Subscriptions: $60\n7. Entertainment: $100\n8. Clothes: $80\n9. Miscellaneous: $90\n\nNow, add up all these amounts to get the total expenses for December 2023:\n\n$500 + $1300 + $150 + $120 + $190 + $60 + $100 + $80 + $90 = $2,680\n\nYour total expenses for December 2023 are $2,680.",
+        "You can find your total expenses for December 2023 by adding up all the individual expenses you made during that month. The provided information on each trip gives you an idea of what each expense cost, so you can use those numbers to calculate your overall expenses in December.",
+        "You spent $3200 in December 2023."
+      ]
+    },
+    {
+      "question": "what are Eugene's technical skills?\nwhat was my expenses for January 2023?\nwhere did I travel in 2024?\n",
+      "answer_count": 2,
+      "answers": [
+        "Eugene's technical skills are:\n1. Automation Engineering (QA)\n2. Smoke, Regression and Functional Testing\n3. API testing with Rest Assured and Postman\n4. BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java\n5. Version control (Git, GitHub)\n6. Defect tracking (Jira)\n7. CI/CD integration with Jenkins, GitHub Actions\n\nMy expenses for January 2023 were:\n1. Groceries ($480)\n2. Rent ($1300)\n3. Utilities ($160)\n4. Transportation ($130)\n5. Dining out ($210)\n6. Subscriptions ($60)\n7. Entertainment ($90)\n8. Miscellaneous ($120)\nTotal: $2650\n\nI traveled to Argentina in 2024, visiting Buenos Aires and Mendoza.",
+        "Eugene's technical skills include expertise in Smoke, Regression, and Functional Testing, as well as API testing with Rest Assured and Postman. He is also proficient in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java. In terms of education, Eugene holds a degree in Information Technologies from the College of Informatics - Chisinau, MD.\n\nIn January 2023, my expenses were as follows: $2,000 for groceries, $1,200 for rent, $150 for utilities, $120 for transportation, $180 for dining out, $60 for subscriptions, $90 for entertainment, and $100 for miscellaneous items. The total spent was $2650.\n\nIn 2024, I traveled to Thailand \u2013 Bangkok & Phuket (2023)."
+      ]
+    },
+    {
+      "question": "What were my expenses in January 2023?",
+      "answer_count": 4,
+      "answers": [
+        "Your expenses for January 2023 were $2650.",
+        "Your expenses for January 2023 were $480.",
+        "Your expenses for January 2023 were not provided in the context.",
+        "Your expenses for January 2023 were not provided."
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2023?\n",
+      "answer_count": 5,
+      "answers": [
+        "Based on the provided context, there is no information available about going on vacation in 2023.",
+        "I don't know.",
+        "I don't know. The context does not contain any information about a vacation in 2023.",
+        "I don't know. The context does not contain any information about a vacation taken in 2023.",
+        "I don't know. The context does not contain any information about your vacation plans for 2023."
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2024 and how much did I spent?",
+      "answer_count": 2,
+      "answers": [
+        "You went on vacation to Argentina in 2024. Your total expenses for March 2024 were $2,370.",
+        "You went on vacation to Argentina \u2013 Buenos Aires & Mendoza in 2024. You spent $2,370."
+      ]
+    },
+    {
+      "question": "What were my expenses in June 2023?",
+      "answer_count": 3,
+      "answers": [
+        "Your expenses for June 2023 were not provided in the context.",
+        "I don't have that information.",
+        "Your expenses for June 2023 were $0."
+      ]
+    },
+    {
+      "question": "what are Eugene's technical skills?\nwhat was my expenses for January 2023?\nwhere did I travel in 2024?",
+      "answer_count": 2,
+      "answers": [
+        "Eugene's technical skills include:\n1. QA Automation Engineer with expertise in Smoke, Regression, and Functional Testing, as well as API testing with Rest Assured and Postman.\n2. Proficient in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java.\n3. Skilled in version control (Git, GitHub), defect tracking (Jira), and CI/CD integration with Jenkins, GitHub Actions.\n\nMy expenses for January 2023 were:\n- Groceries: $480\n- Rent: $1,300\n- Utilities: $160\n- Transportation: $130\n- Dining out: $210\n- Subscriptions: $60\n- Entertainment: $90\n- Miscellaneous: $120\nTotal Expenses: $2,260",
+        "Eugene's technical skills include:\n1. Software testing across all phases of SDLC and STLC, with expertise in Smoke, Regression, and Functional Testing, as well as API testing with Rest Assured and Postman.\n2. Proficiency in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java.\n3. Experience with version control (Git, GitHub) and defect tracking (Jira), as well as CI/CD integration with Jenkins, GitHub Actions."
+      ]
+    },
+    {
+      "question": "what are Eugene's technical skills?\nwhat was Eugene's expenses for January 2023?\nwhere did I travel in 2024?",
+      "answer_count": 2,
+      "answers": [
+        "Eugene's technical skills are proficient in version control (Git, GitHub), defect tracking (Jira), and CI/CD integration with Jenkins, GitHub Actions.\nEugene's expenses for January 2023 were $2650.\nI traveled to Jupiter, Florida in 2024.",
+        "Eugene's technical skills include proficiency in Smoke, Regression, and Functional Testing, as well as API testing with Rest Assured and Postman. He is skilled in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java. In January 2023, Eugene's expenses were $2650.\nHe traveled to Jupiter, Florida in 2024."
+      ]
+    },
+    {
+      "question": "how much money Eugene has?\n",
+      "answer_count": 2,
+      "answers": [
+        "Eugene has $12.25, Olga has $100, Maple has $53.50, and Moose is the reachest he has $10000. So, Eugene has $12.25 in total.",
+        "Eugene has $20."
+      ]
+    },
+    {
+      "question": "give me Eugene's professional summary",
+      "answer_count": 3,
+      "answers": [
+        "Eugene is a highly skilled and experienced professional with expertise in managing finances, budgeting, and expense tracking. With a strong background in analyzing data and identifying trends, he has consistently demonstrated the ability to optimize resources and make informed decisions that contribute to overall business success. Through his proactive approach and dedication to excellence, Eugene has established himself as a trusted advisor in financial matters, helping organizations achieve their goals efficiently and effectively.",
+        "Eugene is a professional in the field of <|professional_summary|>. He has extensive experience and expertise in this domain. His qualifications include a Bachelor's degree in <|field_of_study|> from <|university|> and a Master's degree in <|specific_degree|> from <|another_university|>.",
+        "Eugene was a young, talented musician and songwriter who had a passion for creating music that touched people's souls. He dedicated his life to perfecting his craft and honing his skills as a composer. With an innate ability to connect with others through his art, Eugene's work resonated deeply with audiences worldwide."
+      ]
+    },
+    {
+      "question": "What were my expenses in March 2023?",
+      "answer_count": 4,
+      "answers": [
+        "I don't have that information.",
+        "I couldn't find any expense information for 2023. Please upload relevant financial documents and try again.",
+        "Your expenses for March 2023 were $2650.\n\nBreakdown:\n- Groceries: $490\n- Rent: $1300\n- Utilities: $155\n- Transportation: $125\n- Dining out: $220\n- Subscriptions: $60\n- Entertainment: $100\n- Clothes: $95\n- Miscellaneous: $105\n\nTotal: $2650",
+        "Your expenses for March 2023 were $2650."
+      ]
+    },
+    {
+      "question": "What does Eugene do for a living?",
+      "answer_count": 18,
+      "answers": [
+        "Eugene is a software developer.",
+        "Eugene Mindrescu is a businessman.",
+        "Eugene Mindrescu is a software engineer.",
+        "Eugene is a scientist.",
+        "Eugene Mindrescu is the owner of a business with Andy and Rene.",
+        "Eugene is an engineer who works as a designer for a company called \"X\".",
+        "Eugene Mindrescu is an accountant.",
+        "Eugene is a business owner.",
+        "Eugene is a business person, running his own company with Andy and Rene.",
+        "Eugene Mindrescu is not mentioned in the context, so it's unclear what his occupation or profession might be.",
+        "Eugene is a businessman. He owns and operates a business with his partner, Rene.",
+        "Eugene Mindrescu is a businessman. He runs a business with his wife, Olga Mazura, and their children, Maple Shmuric and Moose Moosovich.",
+        "Eugene Mindrescu is a professional golfer.",
+        "Eugene Mindrescu is a business owner.",
+        "Eugene is a business executive.",
+        "Eugene Mindrescu is an entrepreneur. He started his own business, likely in the technology or finance industry, with a focus on software development, digital marketing, and/or investments.",
+        "Eugene Mindrescu is a lawyer.",
+        "Eugene is a businessman."
+      ]
+    },
+    {
+      "question": "what are my technical skills and how much experience do I have?\nwhat was my expenses for January 2023?\nwhere did I travel in 2024?\n",
+      "answer_count": 8,
+      "answers": [
+        "1. Your technical skills include: \n   - Java OOP\n   - Automation tools (Robot Framework, Selenium)\n   - CI/CD integration (Jenkins, GitHub Actions)\n   - Functional testing\n   - Smoke and Regression testing\n   - Automated test case management\n   - Documentation of results and defects\n   - Continuous improvement of QA practices in Agile sprints.\n   - You have 8+ years of experience as a QA Automation Engineer at Imprivata.\n2. Your expenses for January 2023 are: $X (please provide details).\n3. In 2024, you traveled to [location] (please provide details).",
+        "Based on your work history and accomplishments, you have expertise in QA Automation with specific knowledge of Robot Framework, Selenium, BDD/TDD tools, version control (Git), defect tracking (Jira), CI/CD integration (Jenkins, GitHub Actions). You also have extensive experience in functional testing, regression testing, and maintaining automated test cases. Your expenses for January 2023 are $5,000, and you travelled to New York, London, Paris, and Tokyo in 2024.",
+        "Based on your work history and accomplishments, your technical skills include Java OOP, Automation tools (Robot Framework, Selenium), version control systems (Git, GitHub), defect tracking (Jira) and CI/CD integration with Jenkins. You have 8+ years of experience in software testing across all phases of SDLC and STLC.\nFor January 2023 expenses, I don't have access to that information as it was not provided in your message.\nAs for travel in 2024, please provide me more specific details about the locations you intend to visit or destinations you are interested in.",
+        "My technical skills are focused on Java OOP and automation tools. I have 8 years of experience in software testing across all phases of SDLC and STLC, with expertise in Smoke, Regression, and Functional Testing. My proficiency lies in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java. I am skilled in version control (Git, GitHub), defect tracking (Jira), and CI/CD integration with Jenkins, GitHub Actions. In terms of expenses for January 2023, it was X. I traveled to Y in 2024.",
+        "To answer your first question, my technical skills include Java OOP and Automation tools like Robot Framework and Selenium. I have 8+ years of experience in QA Automation Engineering across various phases of software development.\nFor the second question, expenses for January 2023 are available on the finance portal. Please refer to the provided link for detailed information.\nRegarding your third question, my travel plans for 2024 include attending conferences and workshops related to QA engineering practices in different parts of the world. I have already booked tickets for New York, San Francisco, London, and Tokyo.",
+        "You have expertise in QA automation, with experience in designing and maintaining test automation frameworks using Robot Framework and Selenium. You are experienced in performing Functional, Smoke, Integration, and Regression Testing, as well as integrating automation into CI/CD pipelines using GitHub Actions. You have also demonstrated proficiency in managing the automation cycles and meeting functional benchmarks, optimizing existing automated test cases, documenting test results, reporting defects, and contributing to continuous improvement of QA practices in Agile sprints.",
+        "Your technical skills include Java OOP and Automation tools, such as Robot Framework and Selenium. You have 8+ years of experience in software testing, focusing on Smoke, Regression, and Functional Testing.\nFor January 2023, your expenses were...\nIn 2024, you will travel to...",
+        "Your technical skills include QA Automation, Java OOP, and Automation tools like Robot Framework and Selenium. You have 8+ years of experience in software testing across all phases of SDLC and STLC with expertise in Smoke, Regression, and Functional Testing. You also have experience in version control using Git and GitHub, defect tracking using Jira, and CI/CD integration using Jenkins and GitHub Actions. As for your expenses in January 2023, they are $2,000. For your travel plans in 2024, you will be traveling to [location]."
+      ]
+    },
+    {
+      "question": "Who is Eugene?",
+      "answer_count": 12,
+      "answers": [
+        "Eugene is a character in a fictional story called \"The Adventures of Eugene\". He is the protagonist and the main focus of the plot. He is also the main character's father, who plays an important role in his life and journey throughout the book.",
+        "Eugene is a character in the film The Last Flight. He is a former pilot who has been imprisoned for murder and is serving his sentence at a mental institution. In the film, Eugene is portrayed as a troubled man who struggles with his past mistakes. The plot revolves around his attempt to escape from the asylum and seek redemption for his actions.",
+        "Eugene is a character in the provided context. He has $12.25, which is his personal balance at that time.",
+        "Eugene is a fictional character created by the author, Eugene Field. He was born in 1849 and died in 1922. He was an American poet, humorist, and schoolteacher. He is best known for his poetry collection \"A Boy's Will\" which he wrote when he was only 13 years old.",
+        "Eugene is a fictional character in the American television series \"The Wire\". He is a Baltimore Police Department homicide detective and one of the main characters.",
+        "Eugene is a fictional character who appears in the American television series The X-Files, which aired from 1993 to 2002. He serves as a supporting character and an FBI agent, assigned to work with Dana Scully on paranormal cases. Eugene has a complicated relationship with his colleagues, including Fox Mulder and Walter Skinner, as well as his love interest and eventual wife, Monica Reyes.",
+        "Eugene is a male given name.",
+        "Eugene is a man who has been mentioned several times in conversations, but his name does not appear to be relevant to the context of this specific question.",
+        "Eugene is a person who has $12.25, $100, and $53.50. They are not mentioned as being related to Andy or Rene in the provided context.",
+        "Eugene is a person.",
+        "Eugene is a person. He has $12.25, and he owns a business with Andy and Rene.",
+        "Eugene is one of the characters in the story. He has $12.25."
+      ]
+    },
+    {
+      "question": "how much money Eugene has?\nwho has the most money?\nwho is the richest?\n",
+      "answer_count": 2,
+      "answers": [
+        "Eugene has $12.25.\nMoose is the richest with $10000.",
+        "Eugene has $12.25.\nOlga has the most money.\nMoose is the richest."
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2023? What are my technical skills? how much money I spent in march?\n",
+      "answer_count": 10,
+      "answers": [
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific details about your technical skills.\n\nEXPENSE INFORMATION:\nIn March 2024, you spent $2,840 on expenses. This includes groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, and miscellaneous expenses.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nThe context does not provide information about your expenses in March.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of the trip was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nThe context does not provide specific information about your expenses in March.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of the vacation was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nIn March 2024, you spent $2,840 on expenses. The expenses included groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, and miscellaneous expenses.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of the vacation was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nIn March 2024, you spent $2,840 on expenses. This includes groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, and miscellaneous expenses.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of your vacation was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nIn March 2024, you spent $2,840 on expenses. The exact month and year are mentioned in the context, but the expenses are not related to the question.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of your vacation was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nIn March 2024, you spent $2,840 on expenses. This includes groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, and miscellaneous expenses.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. The exact destination was Bangkok & Phuket. You stayed for 14 days. The total cost of your vacation was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific information about your technical skills.\n\nEXPENSE INFORMATION:\nYou spent $2,610 in March 2023. The expenses included groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, and miscellaneous expenses.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. You stayed for 14 days and the total cost of your trip was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific details about your technical skills.\n\nEXPENSE INFORMATION:\nThe context does not provide specific information about your expenses in March 2023.",
+        "VACATION INFORMATION:\nYou went on vacation to Thailand in 2023. You stayed for 14 days and the total cost of your trip was $3,230.\n\nTECHNICAL SKILLS:\nYour technical skills include programming languages, tools and frameworks, and technical domains and expertise. However, the context does not provide specific details about your technical skills.\n\nEXPENSE INFORMATION:\nThe context does not provide specific information about your expenses in March."
+      ]
+    },
+    {
+      "question": "what are Eugene's technical skills?\nwhat was Eugene's expenses for January 2023?",
+      "answer_count": 2,
+      "answers": [
+        "Eugene's technical skills:\n1. Italy - Rome & Florence (2015)\n   - Airline: Alitalia\n   - Flight Info: JFK to FCO, Round Trip\n   - Plane Ticket Cost: $850\n   - Stay: 10 days\n   - Hotel: Hotel Nazionale, Rome \u2013 $1,200 total\n   - Rental Car: 2015 Fiat 500 \u2013 $380\n   - What He Loved: Exploring ancient ruins and eating fresh gelato every night.\n   - Total Cost: $2,430\n\nEugene's expenses for January 2023:\n1. Italy - Rome & Florence (2015)\n   - Airline: Alitalia\n   - Flight Info: JFK to FCO, Round Trip\n   - Plane Ticket Cost: $850\n   - Stay: 10 days\n   - Hotel: Hotel Nazionale, Rome \u2013 $1,200 total\n   - Rental Car: 2015 Fiat 500 \u2013 $380\n   - What He Loved: Exploring ancient ruins and eating fresh gelato every night.\n   - Total Cost: $2,430\n\nEugene's other technical skills are not provided in the information given.",
+        "Eugene's technical skills: \n1. Programming Languages: Python, HTML, CSS, JavaScript\n2. Software Development Tools: Git, Visual Studio Code, Eclipse\n3. Web Development Experience: Building dynamic websites using React and Node.js\n4. Data Analysis Skills: Familiar with pandas library for data manipulation in Python\n5. Database Management: Proficient in MySQL and MongoDB\n6. Communication Skills: Strong verbal and written communication skills\n7. Teamwork: Collaborates effectively with cross-functional teams\n8. Problem Solving: Ability to identify and solve technical issues efficiently\n9. Continuous Learning: Open to learning new technologies and improving existing skills\n10. Attention to Detail: Ensures high quality code with minimal errors\n\nEugene's Expenses for January 2023: \n1. Groceries: $480\n2. Rent: $1300\n3. Utilities: $160\n4. Transportation: $130\n5. Dining out: $210\n6. Subscriptions: $60\n7. Entertainment: $90\n8. Clothes: $100\n9. Miscellaneous: $120"
+      ]
+    },
+    {
+      "question": "What is Eugene's profession?",
+      "answer_count": 3,
+      "answers": [
+        "Eugene is a former American football player who played for the Cleveland Browns.",
+        "Eugene is a lawyer and he works as a partner at the law firm of ____.",
+        "Eugene is a member of the band The Vandals. He plays guitar and provides vocals for the group."
+      ]
+    },
+    {
+      "question": "January 2023 spending",
+      "answer_count": 2,
+      "answers": [
+        "Your expenses for January 2023 were $2,650.",
+        "Your expenses for January 2023 were $2650."
+      ]
+    },
+    {
+      "question": "how much more does Eugene have ?\n",
+      "answer_count": 12,
+      "answers": [
+        "Eugene has $1 more than Bob.",
+        "Eugene has $10,000.",
+        "Eugene has $100.00 - $12.25 = $87.75 more than Olga.",
+        "Eugene has $2.5 more than John.",
+        "Eugene has $20 more than the man.",
+        "Eugene has $25 more than John.",
+        "Eugene has $5 more.",
+        "Eugene has $5.00 more than Olga and $4.75 more than Maple, so he has a total of $5.00 + $4.75 = $9.75.",
+        "Eugene has a total of $24,000.",
+        "Eugene has an additional $20.",
+        "There is no information provided about the amount of money Eugene has.",
+        "To find out how much more Eugene has, we need to know the amount of money that both Jane and Eugene have. The paragraph doesn't provide this information, so it's impossible to answer the question with certainty."
+      ]
+    },
+    {
+      "question": "how much money I spent in march 2023?\n",
+      "answer_count": 2,
+      "answers": [
+        "I don't have enough information to answer that question. The context does not provide specific information about expenses in March 2023.",
+        "I don't have enough information to answer that question. The provided context does not mention any expenses for March 2023."
+      ]
+    },
+    {
+      "question": "What is the capital of Ukraine?\n\n\n",
+      "answer_count": 4,
+      "answers": [
+        "The capital of Ukraine is Kiev. It is the largest city in the country and serves as its political, cultural, and economic center.",
+        "The capital of Ukraine is Kyiv.",
+        "This is a test document about Paris. Paris is the capital of France. It is known for the Eiffel Tower.",
+        "Ukraine is not a country that has Paris as its capital. The capital of Ukraine is Kyiv."
+      ]
+    },
+    {
+      "question": "what is top-k?",
+      "answer_count": 2,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context."
+      ]
+    },
+    {
+      "question": "expenses for January 2023",
+      "answer_count": 3,
+      "answers": [
+        "Expenses were not provided.",
+        "Your expenses for January 2023 were $2650.",
+        "expenses were not provided"
+      ]
+    },
+    {
+      "question": "what are my skills?",
+      "answer_count": 8,
+      "answers": [
+        "You have skills in the following areas:\n\n1. Technical Skills:\n* Robot Framework\n* Selenium\n* GitHub Actions\n* Agile sprints\n* Information Technologies\n* Regression testing\n* Automated test cases\n* Test maintenance overhead\n* Flaky test scripts\n* Locators\n* Parallel tests\n* Test cycles\n* Functional benchmarks\n* Continuous improvement of QA practices\n1. Education:\n* Information Technologies\n* Accomplishments:\n\t+ Time saving in regression testing from about 5 hours to 3.5 hours, by running parallel tests.\n\t+ Collaborated with team on growing automated test cases from 30% to 80%.\n\t+ Reduced test maintenance overhead by refactoring flaky test scripts and optimizing locators, resulting in a 40% decrease in test failures due to environment instability.\n1. Vacation Travel Summary:\n* Italy \u2013 Rome & Florence (2015)\n\t+ Airline: Alitalia\n\t+ Flight Info: JFK to FCO, Round Trip\n\t+ Plane Ticket Cost: $850\n\t+ Stay: 10 days\n\t+ Hotel: Hotel Nazionale, Rome \u2013 $1,200 total\n\t+ Rental Car: 2015 Fiat 500 \u2013 $380\n\t+ What He Loved: Exploring ancient ruins and eating fresh gelato every night.\n\t+ Total Cost: $2,430\n* Japan \u2013 Tokyo & Kyoto (2016)\n\t+ Airline: Japan Airlines\n\t+ Flight Info: LAX to NRT\n\t+ Plane Ticket Cost: $1,100\n\t+ Stay: 12 days\n\t+ Hotel: Granbell Hotel, Tokyo \u2013 $1,650 total\n\t+ Rental Car: 2016 Toyota Prius \u2013 $500\n\t+ What He Loved: Visiting bamboo forests and eating sushi from Tsukiji Market.\n\t+ Total Cost: $3,250\n1. Monthly Expenses:\n* February 2023:\n\t+ Budget",
+        "You have skills in the following technical domains:\n\n1. Test Automation Frameworks: Robot Framework, Selenium\n2. Testing Tools and Frameworks: GitHub Actions, Jenkins, GitHub Actions, Rest Assured, Postman\n3. Testing Methodologies: Functional, Smoke, Integration, Regression Testing\n4. Programming Languages: Java\n5. Version Control: Git, GitHub\n6. Defect Tracking: Jira\n7. CI/CD Integration: Jenkins, GitHub Actions\n8. BDD and TDD: Cucumber, Robot Framework, TestNG, Selenium, Java\n9. API Testing: Rest Assured, Postman\n\nYou have experience in the following areas:\n\n1. Test Automation\n2. Agile Project Management\n3. Requirements Analysis\n4. Test Case Development\n5. Test Execution\n6. Defect Reporting\n7. Collaboration with Developers and Product Owners\n8. Knowledge Sharing\n\nYou have accomplishments in the following areas:\n\n1. Time Saving in Regression Testing\n2. Growing Automated Test Cases\n3. Reducing Test Maintenance Overhead\n4. Improving Test Execution Time\n5. Collaborating with Team Members\n6. Acc",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Regression Testing Management and Optimization\n5. Automated Test Case Maintenance and Optimization\n6. Test Result Documentation and Defect Reporting\n7. Agile Sprint Continuous Improvement\n\nThese skills were mentioned in the context related to your work history and education.",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Regression Testing Management and Optimization\n5. Automated Test Case Maintenance and Optimization\n6. Test Result Documentation and Defect Reporting\n7. Agile Sprint Continuous Improvement\n8. Information Technologies (Field of Study)\n9. Time Saving in Regression Testing (Accomplishment)\n10. Team Collaboration on Automated Test Cases Growth (Accomplishment)\n11. Test Maintenance Overhead Reduction through Refactoring and Optimization (Accomplishment)\n\nPlease note that this information is based on the provided context and may not be exhaustive or up-to-date.",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Regression Testing Management and Optimization\n5. Automated Test Case Maintenance and Optimization\n6. Test Result Documentation and Defect Reporting\n7. Agile Sprint Continuous Improvement\n8. Information Technologies (Field of Study)\n9. Time Saving in Regression Testing (Achievement)\n10. Team Collaboration on Automated Test Cases Growth (Achievement)\n11. Test Maintenance Overhead Reduction (Achievement)\n12. Flaky Test Script Refactoring and Locator Optimization (Achievement)\n13. 40% Decrease in Test Failures due to Environment Instability (Achievement)\n\nPlease note that the context does not provide specific information about your skills in other technical domains or expertise areas.",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Test Result Documentation and Defect Reporting\n5. Continuous Improvement of QA Practices in Agile Sprints\n6. Parallel Test Execution for Time Saving in Regression Testing\n7. Automated Test Case Growth and Optimization\n8. Test Maintenance Overhead Reduction through Refactoring and Locator Optimization\n\nPlease note that the context does not provide specific information about your skills in other technical domains or expertise areas.",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Test Result Documentation and Defect Reporting\n5. Continuous Improvement of QA Practices in Agile Sprints\n6. Parallel Test Execution for Time Saving in Regression Testing\n7. Automated Test Case Growth and Optimization\n8. Test Maintenance Overhead Reduction through Refactoring and Locator Optimization\n\nPlease note that this information is based on the context provided and may not be exhaustive or up-to-date.",
+        "Your skills include:\n\n1. Test Automation Framework Design and Maintenance using Robot Framework and Selenium\n2. Functional, Smoke, Integration, and Regression Testing\n3. CI/CD Pipeline Integration using GitHub Actions\n4. Test Results Documentation and Defect Reporting\n5. Continuous Improvement of QA Practices in Agile Sprints\n6. Parallel Test Execution for Time Saving in Regression Testing\n7. Automated Test Case Growth and Optimization\n8. Test Maintenance Overhead Reduction through Refactoring and Locator Optimization\n\nPlease note that this information is based on the provided context and may not be exhaustive or up-to-date."
+      ]
+    },
+    {
+      "question": "Tell me about my January 2023 expenses",
+      "answer_count": 3,
+      "answers": [
+        "Expenses for January 2023 were not provided.",
+        "Your expenses for January 2023 were $2650.",
+        "Your expenses for January 2023 were not provided."
+      ]
+    },
+    {
+      "question": "what are my technical skills?\nwhat was my expenses for January 2023?\nwhere did I travel in 2024?\n",
+      "answer_count": 4,
+      "answers": [
+        "1. Your technical skills include:\n  - Java OOP and Automation tools\n  - Manual and automated software testing\n  - Reviewing requirements, specifications and technical design documents\n  - Writing and optimizing test cases\n  - Collaborating with developers and product owners to stay current on product features and intended functionality\n  - Testing functional and compatibility of new programs or updates in comparison to existing applications\n  \n2. For January 2023: Your expenses were $2610.\n3. In 2024, you traveled to the United States.",
+        "To answer your first question, your technical skills are a combination of Java OOP and Automation tools. You have experience in Smoke, Regression, and Functional Testing with Rest Assured and Postman. You are also proficient in BDD and TDD using Cucumber, Robot Framework, TestNG, Selenium, and Java.\n\nRegarding your second question, you spent a total of $2610 on expenses in January 2023.\n\nLastly, in February 2024, you traveled to United Airlines.",
+        "Your technical skills include Java OOP and Automation tools.\nIn January 2023, your expenses were: Groceries - $500, Rent - $1300, Utilities - $150, Transportation - $120, Dining out - $190, Subscriptions - $60, Entertainment - $110, Clothes - $80, Miscellaneous - $100. The total spent was $2610.\nIn 2024, you traveled to the United States and shared knowledge among team members through knowledge transfer sessions on Java OOP and Automation tools.",
+        "Your technical skills include knowledge of Java OOP and Automation tools. You have also demonstrated proficiency in BDD and TDD using tools like Cucumber, Robot Framework, TestNG, Selenium, and Java.\nIn January 2023, your total expenses were $2610. \nFor the month of February 2024, you traveled to several places."
+      ]
+    },
+    {
+      "question": "where did I go on vacation in 2023?",
+      "answer_count": 2,
+      "answers": [
+        "You went on vacation to Thailand in 2023.",
+        "You went to Thailand in 2023."
+      ]
+    },
+    {
+      "question": "what where my total expenses for December 2023?",
+      "answer_count": 3,
+      "answers": [
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "Your total expenses for December 2023 were $3001.",
+        "Your total expenses for December 2023 were not provided in the context."
+      ]
+    },
+    {
+      "question": "What is a few shot prompt?",
+      "answer_count": 6,
+      "answers": [
+        "A few shot prompt is a type of question format that presents multiple possible answers, each with only a few words. The goal is to test the user's ability to quickly identify the correct answer from a limited set of options.",
+        "A few shot prompt is a type of question or task that requires the user to provide only a short answer, typically one or two words. It's often used in games or quizzes where participants need to quickly respond with the most appropriate option from a limited set of choices.",
+        "A few shot prompt is a type of question that presents a short list of possible answers, and the user must choose one answer from the options provided. It's like asking someone to pick their favorite ice cream flavor out of a few choices.",
+        "A few shot prompt is a type of question that requires the user to provide multiple possible answers, typically in response to a given statement or scenario. The goal is to test their ability to think quickly and come up with relevant responses within a limited time frame.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "I don't have enough information to answer that question. Please upload relevant documents first or try a different question."
+      ]
+    },
+    {
+      "question": "what where my expenses of December 2023?\n\n\n",
+      "answer_count": 6,
+      "answers": [
+        "Eugene's expenses for December 2023 were as follows:\n- Groceries: $450\n- Rent: $1200\n- Utilities: $150\n- Transportation: $130\n- Dining out: $200\n- Subscriptions: $50\n- Entertainment: $80\n- Clothes: $100\n- Miscellaneous: $90\nTotal expenses for the month: $3,250",
+        "Eugene's monthly expenses for December 2023 were:\n\n1. Groceries: $470\n2. Rent: $1200\n3. Utilities: $150\n4. Transportation: $120\n5. Dining out: $200\n6. Subscriptions: $50\n7. Entertainment: $80\n8. Clothes: $100\n9. Miscellaneous: $90\n\nTotal expenses for December 2023: $2440",
+        "Eugene's monthly expenses for the past three years are as follows:\nJanuary 2022: $2440\nFebruary 2022: $3,250\nJanuary 2023: $2650\nFebruary 2023: $3,230\nMarch 2023 (not given): unknown\nApril 2023 (not given): unknown\nMay 2023 (not given): unknown\nJune 2023 (not given): unknown\nJuly 2023 (not given): unknown\nAugust 2023 (not given): unknown\nSeptember 2023 (not given): unknown",
+        "I don't have the exact data for your expenses in December 2023, but I can provide you with a general overview of how to calculate them. You would need to gather all of your receipts or bank statements from that month and add up the total amount spent on each category (groceries, rent, utilities, transportation, dining out, subscriptions, entertainment, clothes, miscellaneous). Make sure to include any other expenses you had during that time period as well. Once you have calculated the total amount for each category, you can add them together to get your overall expenses in December 2023.",
+        "January 2023:\n- Groceries: $520\n- Rent: $1200\n- Utilities: $160\n- Transportation: $110\n- Dining out: $180\n- Subscriptions: $50\n- Entertainment: $100\n- Clothes: $90\n- Miscellaneous: $120\nTotal Spent: $2440\n\nFebruary 2023:\n- Groceries: $470\n- Rent: $1200\n- Utilities: $140\n- Transportation: $130\n- Dining out: $210\n- Subscriptions: $50\n- Entertainment: $100\n- Clothes: $90\n- Miscellaneous: $100\nTotal Spent: $2440\n\nMarch 2023 (no information given)",
+        "You have provided the following information:\n- Budget for December 2023 is $3500.\n- Expenses in January 2022 were $2440, February 2022 were $3,250, March 2024 were $3,230, April 2014 were $2,370, May 2023 were $2,150.\nTo find the expenses of December 2023:\n1. First, add up all the given expenses for months that fall within December (Jan, Feb, Mar, Apr and May).\n- January 2022 + February 2022 + March 2024 + April 2014 + May 2023 = $2440 + $3,250 + $3,230 + $2,370 + $2,150 = $15,000.\n2. Next, subtract the total expenses from December's budget: $3500 - $15,000 = -$11,500.\nHowever, it doesn't make sense to have negative expenses as it means you overspent your budget. This could be due to a mistake in the provided information or calculation errors. Please double-check your data and calculations for accurate results."
+      ]
+    },
+    {
+      "question": "how much money Olga has?\nwho is the richest? \nwhat is the annual salary?\nhow much money they have total together?\n",
+      "answer_count": 4,
+      "answers": [
+        "Olga has $100.\nMoose is the richest person with $10000.\nThe annual salary for Olga is unknown.\nThe total amount of money they have together is unknown as it depends on their individual incomes and expenses.",
+        "Olga has $100.\nMoose is the richest.\nThe annual salary of Moose is $10000.\nThey have a total of $1200 together.",
+        "Olga has $100. \nEugene is the richest.\nThe annual salary is $500,000.\nTogether they have a total of $600,000.",
+        "Olga has $100. \nMaple Shmuric is the richest with $10000.\nThe annual salary is not provided in this information. \nThey have a total of $1225 together (Eugene: $12.25 + Moose: $100 + Acme: $100)."
+      ]
+    },
+    {
+      "question": "what are my technical skills?\nhow much money did I spend in march?\n",
+      "answer_count": 11,
+      "answers": [
+        "The technical skills listed by the user include:\n1. Java OOP and Automation tools\n2. QA Automation Engineer\n3. Test Cases Writing and Optimization\n4. Manual and Automated Software Testing\n5. Collaboration with Developers and Product Owners\n6. Functional testing of new programs or updates in comparison to existing applications\n7. Regression testing\n8. Time saving in regression testing\n9. Growing automated test cases from 30% to 80%\n10. Refactoring flaky test scripts and optimizing locators\n11. Decrease in test failures due to environment instability by 40%",
+        "What are your technical skills? I'm happy to provide you with a list of skills that would be relevant to various roles. As for the amount of money spent in March, can you please specify which expenses you are referring to?",
+        "My technical skills include Java, Cucumber, Robot Framework, Selenium, Postman, Git, GitHub, Jira, and Jenkins.",
+        "What are your technical skills?",
+        "You can find your technical skills on the \"Technical Skills\" section of your profile. As for March expenses, that information is not publicly available. However, you may have a record of your personal expenses within your personal finance or expense management system.",
+        "My technical skills include Java OOP and Automation tools. In March, I spent $15.",
+        "your technical skills include proficiency in Cucumber, Robot Framework, Selenium, Java, and version control with Git. \nin march, you spent approximately $2000 on the following expenses: rent ($1000), utilities ($500), groceries ($400), transportation ($300), entertainment ($200).",
+        "The technical skills that you have are:\n1. Java OOP\n2. Automation tools (Cucumber, Robot Framework, TestNG, Selenium, and Java)\n3. Version control (Git, GitHub)\n4. Defect tracking (Jira)\n5. CI/CD integration with Jenkins and GitHub Actions\n6. Manual and automated software testing\n7. Positive, negative scenarios\n8. Regression testing\n9. Collaboration on product features and functionality\n10. Functional and compatibility testing of new programs or updates in comparison to existing applications\n\nRegarding your expenses in March, you spent $150.",
+        "You have technical skills related to Java OOP and Automation tools.\nIn March, you spent a total of $X in the month.",
+        "My technical skills include Java, Cucumber, Robot Framework, Selenium, and TDD. I spent $500 in March.",
+        "As a QA Engineer, I have the following technical skills:"
+      ]
+    },
+    {
+      "question": "What are the key techniques for effective prompt engineering?",
+      "answer_count": 2,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    }
+  ],
+  "ai_related_questions": [
+    {
+      "question": "what is one shot prompt?",
+      "answer_count": 4,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    },
+    {
+      "question": "What is prompt engineering?",
+      "answer_count": 4,
+      "answers": [
+        "Sorry, I encountered an error while generating a response.",
+        "Sorry, I encountered an error while generating a response.",
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    },
+    {
+      "question": "what is few shot prompt?",
+      "answer_count": 2,
+      "answers": [
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples."
+      ]
+    },
+    {
+      "question": "Tell me about my vacation in Thailand",
+      "answer_count": 1,
+      "answers": [
+        "I'm sorry, but I don't have enough information to answer that question. The context does not provide specific information about a vacation in Thailand."
+      ]
+    },
+    {
+      "question": "What are the key techniques for effective prompt engineering",
+      "answer_count": 1,
+      "answers": [
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    },
+    {
+      "question": "what is prompt engineering?",
+      "answer_count": 4,
+      "answers": [
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context.",
+        "I'm sorry, but I couldn't generate a specific answer based on the available information. Please try rephrasing your question or providing more context."
+      ]
+    },
+    {
+      "question": "\nWhat are the key techniques for effective prompt engineering?\n",
+      "answer_count": 0,
+      "answers": []
+    },
+    {
+      "question": "What is the capital of Ukraine?\n\n\n",
+      "answer_count": 6,
+      "answers": [
+        "The capital of Ukraine is Kyiv.",
+        "The capital of Ukraine is Kyiv.",
+        "This is a test document about Paris. Paris is the capital of France. It is known for the Eiffel Tower.",
+        "The capital of Ukraine is Kiev. It is the largest city in the country and serves as its political, cultural, and economic center.",
+        "The capital of Ukraine is Kyiv.",
+        "Ukraine is not a country that has Paris as its capital. The capital of Ukraine is Kyiv."
+      ]
+    },
+    {
+      "question": "What is a few shot prompt?",
+      "answer_count": 12,
+      "answers": [
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "I don't have enough information to answer that question. Please upload relevant documents first or try a different question.",
+        "I don't have enough information to answer that question. Please upload relevant documents first or try a different question.",
+        "I don't have enough information to answer that question. Please upload relevant documents first or try a different question.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "A few-shot prompt is a technique in natural language processing where you provide the AI model with a few examples of the task you want it to perform before asking it to complete a similar task. This helps guide the model's responses by demonstrating the pattern and format you expect.\n\nFor example, if you want the AI to classify text sentiment, you might provide examples like:\n- Text: \"I love this product!\" Classification: Positive\n- Text: \"This is terrible.\" Classification: Negative\n- Text: \"It's okay, but could be better.\" Classification: Neutral\n\nThen you ask: Text: \"I'm really happy with my purchase.\" Classification: ?\n\nFew-shot prompting is particularly useful when you need specific formatting in responses or when the task might be ambiguous without examples.",
+        "A few shot prompt is a type of question format that presents multiple possible answers, each with only a few words. The goal is to test the user's ability to quickly identify the correct answer from a limited set of options.",
+        "A few shot prompt is a type of question or task that requires the user to provide only a short answer, typically one or two words. It's often used in games or quizzes where participants need to quickly respond with the most appropriate option from a limited set of choices.",
+        "A few shot prompt is a type of question that requires the user to provide multiple possible answers, typically in response to a given statement or scenario. The goal is to test their ability to think quickly and come up with relevant responses within a limited time frame.",
+        "A few shot prompt is a type of question that presents a short list of possible answers, and the user must choose one answer from the options provided. It's like asking someone to pick their favorite ice cream flavor out of a few choices."
+      ]
+    },
+    {
+      "question": "What is the capital of Ukraine?\n\n",
+      "answer_count": 1,
+      "answers": [
+        "Ukraine does not have a capital like France, so the answer to your question is not applicable. The capital of Ukraine is Kyiv."
+      ]
+    },
+    {
+      "question": "What are the key techniques for effective prompt engineering?",
+      "answer_count": 2,
+      "answers": [
+        "I found relevant information in your documents, but I'm having trouble formulating a complete answer. Here's what I know: the context contains information related to your query, but I need to process it differently. Please try rephrasing your question or asking about a specific aspect of the topic.",
+        "Prompt engineering is the process of designing and refining inputs to AI language models to generate more accurate, relevant, and useful outputs. It involves crafting effective prompts that guide the model to produce desired responses.\n\nKey techniques for effective prompt engineering include:\n\n1. Clear instructions: Providing explicit, detailed directions about the task and expected output format\n2. Few-shot examples: Including demonstrations of desired input-output pairs\n3. Chain-of-thought prompting: Encouraging step-by-step reasoning\n4. Role-based prompting: Assigning specific roles to the AI (e.g., \"You are an expert physicist\")\n5. Context enrichment: Providing relevant background information\n6. Formatting: Using structural elements like headers, bullet points, and numbered lists\n7. Temperature adjustment: Controlling randomness in the model's responses\n\nPrompt engineering is crucial for improving AI performance across various applications including content generation, summarization, translation, code writing, and creative tasks."
+      ]
+    }
+  ]
+}
