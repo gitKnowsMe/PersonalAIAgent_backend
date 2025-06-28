@@ -20,8 +20,7 @@ logger = logging.getLogger("personal_ai_agent")
 _indices = {}
 _document_map = {}
 
-# Query result cache
-_query_cache = {}
+# Removed query cache to ensure consistent responses
 
 # Define keyword patterns for document and query classification
 # These could be moved to config or a database table for easier maintenance
@@ -31,11 +30,7 @@ DOCUMENT_TYPE_KEYWORDS = {
     'expense': ['expense', 'budget', 'cost', 'spent', '$', 'dollar', 'payment', 'finance', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 }
 
-QUERY_TYPE_KEYWORDS = {
-    'vacation': ['vacation', 'travel', 'trip', 'holiday', 'visit', 'went', 'go', 'flight', 'hotel', 'resort', 'beach'],
-    'skills': ['skill', 'skills', 'resume', 'cv', 'experience', 'qualification', 'proficiency', 'knowledge', 'programming', 'language', 'framework', 'technical', 'expertise', 'certification', 'ability', 'competency', 'proficient', 'capable', 'what can i do', 'what am i good at', 'what do i know'],
-    'expense': ['expense', 'money', 'spend', 'spent', 'cost', 'budget', 'payment', 'finance', 'dollar', '$', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-}
+# Removed QUERY_TYPE_KEYWORDS - now using enhanced detection in check_query_type function
 
 # Maximum number of chunks to retrieve per document type
 MAX_CHUNKS_PER_TYPE = 3
@@ -164,19 +159,42 @@ def identify_document_type(namespace, file_path=None, sample_content=None) -> Tu
 
 def check_query_type(query: str) -> Tuple[bool, bool, bool, List[str]]:
     """
-    Check what type of query this is based on keywords
-    Returns a tuple of (is_vacation_query, is_skills_query, is_expense_query, years)
+    Enhanced query type detection
     """
     query_lower = query.lower()
     
-    is_vacation_query = any(keyword in query_lower for keyword in QUERY_TYPE_KEYWORDS['vacation'])
-    is_skills_query = any(keyword in query_lower for keyword in QUERY_TYPE_KEYWORDS['skills'])
-    is_expense_query = any(keyword in query_lower for keyword in QUERY_TYPE_KEYWORDS['expense'])
+    # Enhanced vacation query detection
+    vacation_keywords = ['vacation', 'travel', 'trip', 'holiday', 'went', 'go', 'visit', 'traveled', 'journey', 'tour']
+    vacation_locations = ['thailand', 'paris', 'london', 'tokyo', 'new york', 'florida', 'california', 'beach', 'resort']
+    
+    # Enhanced skills query detection
+    skills_keywords = ['technical', 'skill', 'skills', 'resume', 'cv', 'qualification', 'experience', 'expertise', 'proficiency', 'ability']
+    technical_terms = ['programming', 'developer', 'software', 'engineer', 'coding', 'framework', 'language', 'technology', 'automation', 'testing']
+    
+    # Enhanced expense query detection
+    expense_keywords = ['money', 'spend', 'spent', 'expense', 'expenses', 'cost', 'budget', 'dollar', '$', 'purchase', 'transaction', 'bill', 'total']
+    expense_periods = ['march', 'january', 'february', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
     
     # Extract years from query
-    years = re.findall(r'\b20\d\d\b', query)
+    years = re.findall(r'\b(20\d{2})\b', query_lower)
     
-    return (is_vacation_query, is_skills_query, is_expense_query, years)
+    # Check for query types with enhanced detection
+    is_vacation_query = (
+        any(keyword in query_lower for keyword in vacation_keywords) or
+        any(location in query_lower for location in vacation_locations)
+    )
+    
+    is_skills_query = (
+        any(keyword in query_lower for keyword in skills_keywords) or
+        any(term in query_lower for term in technical_terms)
+    )
+    
+    is_expense_query = (
+        any(keyword in query_lower for keyword in expense_keywords) or
+        any(period in query_lower for period in expense_periods)
+    )
+    
+    return is_vacation_query, is_skills_query, is_expense_query, years
 
 def prioritize_namespaces(query, namespaces):
     """
@@ -261,11 +279,7 @@ async def search_similar_chunks(query: str, user_id: int = None, document_id: Op
     Returns:
         List of Document objects
     """
-    # Check if we have a cached result for this query and user
-    cache_key = f"{query}_{user_id}_{document_id}"
-    if cache_key in _query_cache:
-        logger.info(f"Using cached results for query: '{query}'")
-        return _query_cache[cache_key]
+    # Removed caching to ensure fresh and consistent responses
         
     logger.info(f"Searching for chunks similar to: '{query}' (user_id: {user_id}, document_id: {document_id})")
     
@@ -328,7 +342,6 @@ async def search_similar_chunks(query: str, user_id: int = None, document_id: Op
             if namespace_chunks and namespace_chunks[0].metadata.get('score', 0) > HIGH_QUALITY_SCORE_THRESHOLD:
                 logger.info(f"Found high-quality chunk with score {namespace_chunks[0].metadata.get('score')}, stopping early")
                 result = namespace_chunks[:MAX_TOTAL_CHUNKS]
-                _query_cache[cache_key] = result
                 return result
             
             if namespace_chunks:
@@ -373,7 +386,6 @@ async def search_similar_chunks(query: str, user_id: int = None, document_id: Op
         # For skills queries, we ONLY want resume/skills chunks, not vacation or expense data
         if "skill" in query.lower() or "skills" in query.lower() or "resume" in query.lower():
             logger.info("Skills-specific query detected - excluding non-resume chunks")
-            _query_cache[cache_key] = final_chunks
             return final_chunks  # Return only resume chunks for skills queries
     
     if is_expense_query and chunks_by_type['expense']:
@@ -431,9 +443,7 @@ async def search_similar_chunks(query: str, user_id: int = None, document_id: Op
         namespace = chunk.metadata.get('namespace', 'unknown')
         logger.info(f"Chunk {i+1} (from {namespace}): {chunk.page_content[:100]}...")
     
-    # Cache the results
-    _query_cache[cache_key] = final_chunks
-    
+    # Removed caching to ensure fresh responses
     return final_chunks
 
 async def _search_namespace(query: str, namespace: str, top_k: int = 20):

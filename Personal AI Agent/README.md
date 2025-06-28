@@ -121,4 +121,29 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [FAISS](https://github.com/facebookresearch/faiss)
 - [Phi-2](https://huggingface.co/microsoft/phi-2)
-- [BGE Embeddings](https://huggingface.co/BAAI/bge-small-en-v1.5) 
+- [BGE Embeddings](https://huggingface.co/BAAI/bge-small-en-v1.5)
+
+## Recent Changes
+
+### Syntax and Import Fixes
+- Fixed syntax errors that were preventing the server from starting.
+- Corrected import statements to ensure all modules are correctly loaded.
+
+### Model Loading
+- Ensured the correct model (Mistral) is loaded for the AI agent.
+
+### Vector Search Parameters
+- Increased vector search parameters to allow the system to find the correct data, specifically for March 2023 expenses.
+
+### Code Refactoring
+- Refactored code to prevent hard-coded responses, particularly for general AI-related questions.
+- Implemented a configuration file to centralize AI behavior settings.
+- Updated the LLM module to use the new configuration.
+
+### Query and Response Improvements
+- Improved query classification and response validation.
+- Enhanced system prompts to better guide the AI's responses.
+
+### Testing and Debugging
+- Successfully started the server and tested the admin login.
+- Identified and fixed an error in document searching that was preventing successful query responses. 
