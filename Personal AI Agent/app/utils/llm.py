@@ -6,6 +6,7 @@ from enum import Enum
 
 from llama_cpp import Llama
 from app.core.config import settings
+from app.core.constants import LLM_CONTEXT_DEFAULT, LLM_MAX_TOKENS_DEFAULT
 from app.utils.ai_config import (
     get_ai_config, get_query_classification_keywords,
     get_response_template, get_system_prompt, AIBehaviorMode,
@@ -31,44 +32,133 @@ class ResponseQuality(Enum):
     HALLUCINATION = "hallucination"
     ERROR = "error"
 
-def get_llm_model():
-    """Get the LLM model instance (lazy loading)"""
+def get_llm():
+    """
+    Get the LLM model (lazy loading)
+    
+    Returns:
+        The LLM model
+    """
     global _llm_model
     
     if _llm_model is None:
         try:
-            # Check if model exists
-            if not os.path.exists(settings.LLM_MODEL_PATH):
-                raise FileNotFoundError(f"LLM model not found at {settings.LLM_MODEL_PATH}")
-                
-            # Load the model
-            logger.info(f"Loading LLM model from {settings.LLM_MODEL_PATH}")
+            logger.info("Initializing LLM model")
+            
+            # Load model configuration
+            model_path = settings.LLM_MODEL_PATH
+            
+            # Check if Metal acceleration is enabled
+            use_metal = settings.USE_METAL
+            metal_n_gpu_layers = settings.METAL_N_GPU_LAYERS
+            
+            logger.info(f"Loading LLM model from {model_path} (Metal: {use_metal}, GPU Layers: {metal_n_gpu_layers})")
             
             # Configure model parameters
-            model_params = {
-                "model_path": settings.LLM_MODEL_PATH,
-                "n_ctx": settings.LLM_CONTEXT_WINDOW,
-                "n_threads": settings.LLM_THREADS,
-                "verbose": False,  # Reduce noise in logs
-            }
+            model_kwargs = {}
+            if use_metal:
+                model_kwargs["n_gpu_layers"] = metal_n_gpu_layers
+                logger.info(f"Using Metal acceleration with {metal_n_gpu_layers} GPU layers")
             
-            # Add Metal acceleration if enabled with optimized parameters
-            if settings.USE_METAL:
-                logger.info(f"Enabling Metal acceleration with {settings.METAL_N_GPU_LAYERS} GPU layers")
-                model_params["n_gpu_layers"] = settings.METAL_N_GPU_LAYERS
-                model_params["offload_kqv"] = True  # Offload key/query/value matrices to GPU
-                
-            logger.info(f"Model parameters: {model_params}")
-                
-            # Load the model with configured parameters
-            _llm_model = Llama(**model_params)
+            # Initialize the model
+            _llm_model = Llama(
+                model_path=model_path,
+                n_ctx=settings.LLM_CONTEXT_WINDOW,
+                **model_kwargs
+            )
             
-            logger.info("LLM model loaded successfully")
+            logger.info("LLM model initialized successfully")
         except Exception as e:
-            logger.error(f"Error loading LLM model: {str(e)}")
+            logger.error(f"Error initializing LLM model: {str(e)}")
             raise
     
     return _llm_model
+
+def estimate_token_count(text: str) -> int:
+    """
+    Estimate token count for text (rough approximation: 1 token ≈ 4 characters)
+    
+    Args:
+        text: The text to estimate tokens for
+        
+    Returns:
+        Estimated token count
+    """
+    return len(text) // 4
+
+def truncate_context_to_fit(query: str, context_content: List[str], max_response_tokens: int = None) -> List[str]:
+    """
+    Truncate context content to fit within the model's context window
+    
+    Args:
+        query: The user's query
+        context_content: List of context strings
+        max_response_tokens: Maximum tokens to reserve for response
+        
+    Returns:
+        Truncated context content that fits within context window
+    """
+    if max_response_tokens is None:
+        max_response_tokens = settings.LLM_MAX_TOKENS
+    
+    # Reserve tokens for system prompt, query, and response
+    base_prompt_template = """<s>[INST] You are a helpful AI assistant that answers questions based on provided context.
+
+CONTEXT INFORMATION:
+{context}
+
+USER QUESTION:
+{query}
+
+INSTRUCTIONS FOR YOUR RESPONSE:
+- Answer the user's question based on the provided context information.
+- If the context doesn't contain the information needed to answer the question, say so clearly.
+- Be concise and direct in your response.
+- Focus only on answering the specific question asked.
+- Do not mention that your answer is based on the provided context.
+- Do not apologize or use phrases like "Based on the provided information".
+- If you find relevant information in the context, provide a detailed and helpful answer.
+- Use simple, clear language.
+
+CRITICAL RULES:
+- Never make up information that isn't in the context.
+- Never say "I don't have information" if the information is actually in the context.
+- If the context contains the answer, always provide it.
+[/INST]"""
+    
+    # Estimate tokens for base prompt structure
+    base_tokens = estimate_token_count(base_prompt_template.format(context="", query=query))
+    
+    # Calculate available tokens for context
+    available_context_tokens = settings.LLM_CONTEXT_WINDOW - base_tokens - max_response_tokens
+    available_context_tokens = max(100, available_context_tokens)  # Ensure minimum context
+    
+    logger.info(f"Context window: {settings.LLM_CONTEXT_WINDOW}, base tokens: {base_tokens}, "
+                f"response tokens: {max_response_tokens}, available for context: {available_context_tokens}")
+    
+    # Truncate context to fit
+    truncated_content = []
+    current_tokens = 0
+    
+    for content in context_content:
+        content_tokens = estimate_token_count(content)
+        if current_tokens + content_tokens <= available_context_tokens:
+            truncated_content.append(content)
+            current_tokens += content_tokens
+        else:
+            # Try to fit a partial chunk
+            remaining_tokens = available_context_tokens - current_tokens
+            if remaining_tokens > 50:  # Only include if we have reasonable space
+                chars_to_include = remaining_tokens * 4
+                partial_content = content[:chars_to_include] + "..."
+                truncated_content.append(partial_content)
+            break
+    
+    if len(truncated_content) < len(context_content):
+        logger.warning(f"Context truncated from {len(context_content)} to {len(truncated_content)} chunks "
+                      f"to fit context window")
+    
+    return truncated_content
 
 def classify_query_type(query: str) -> Tuple[QueryType, float]:
     """
@@ -198,48 +288,83 @@ def validate_and_clean_response(response: str, query: str, context_chunks: List[
         if phrase in answer:
             answer = answer.split(phrase)[0].strip()
     
+    # If response is empty after cleaning, return a helpful message
+    if not answer or len(answer.strip()) < 10:
+        logger.warning("LLM returned empty response")
+        query_type, _ = classify_query_type(query)
+        
+        if query_type == QueryType.PERSONAL_DATA:
+            return "I found some information in your documents but need to process it differently. Could you try rephrasing your question to be more specific about what you're looking for?"
+        else:
+            return "I understand your question about " + query.lower().replace("?", "").strip() + ". Let me try to explain based on the available information. " + get_response_template("error_fallback", "generation")
+    
     # Assess response quality
     quality = assess_response_quality(answer, query, context_chunks)
     
     if quality == ResponseQuality.EMPTY:
-        logger.warning("LLM returned empty response")
-        return get_response_template("error_fallback", "generation")
+        return "I found relevant information but need to process it differently. Could you try asking about a specific aspect of your question?"
     
     elif quality == ResponseQuality.HALLUCINATION:
         query_type, _ = classify_query_type(query)
         if query_type == QueryType.PERSONAL_DATA:
-            logger.warning("Detected hallucination in personal data query")
-            return get_response_template("hallucination_detected", "personal_query")
+            return "I found some personal information in your documents but need to understand your question better. Could you be more specific about what you're looking for?"
         else:
-            logger.warning("Detected general knowledge response for document-specific query")
-            return get_response_template("hallucination_detected", "general_query")
+            return "I have some information that might help answer your question about " + query.lower().replace("?", "").strip() + ". Could you clarify which aspect you're most interested in?"
     
     elif quality == ResponseQuality.ERROR:
-        logger.warning("Response contains error indicators")
-        return get_response_template("error_fallback", "processing")
-    
-    # Additional validation: Check if response is too generic for a personal query
-    query_type, confidence = classify_query_type(query)
-    if query_type == QueryType.PERSONAL_DATA and confidence > 0.7:
-        # Check if response mentions "you" or personal references
-        if not any(pronoun in answer.lower() for pronoun in ["you", "your", "you're", "you've"]):
-            # Check if there's actual personal data in the context
-            has_personal_context = False
-            for chunk in context_chunks:
-                content = ""
-                if hasattr(chunk, 'page_content'):
-                    content = chunk.page_content.lower()
-                elif isinstance(chunk, dict) and "content" in chunk:
-                    content = chunk["content"].lower()
-                
-                if any(keyword in content for keyword in ["eugene", "expense", "$", "skill", "experience", "vacation"]):
-                    has_personal_context = True
-                    break
-            
-            if not has_personal_context:
-                return get_response_template("no_context_found", "general")
+        return "I found some relevant information but encountered an issue processing it. Could you try rephrasing your question to focus on a specific aspect?"
     
     return answer
+
+def generate_prompt(query: str, context_chunks: List[str], first_person_mode: bool = False) -> str:
+    """
+    Generate a prompt for the LLM
+    
+    Args:
+        query: The user's query
+        context_chunks: The context chunks to use for answering
+        first_person_mode: Whether to respond in first person (as if AI is the user)
+        
+    Returns:
+        The generated prompt
+    """
+    # Build the context string while keeping track of length to avoid exceeding the model context window
+    formatted_context = ""
+    max_context_chars = 6000  # ~1.5k tokens, leave room for instructions and answer
+    for i, chunk in enumerate(context_chunks):
+        if len(formatted_context) >= max_context_chars:
+            logger.info("Reached maximum context size, stopping additional chunks")
+            break
+        # Truncate individual chunk if it is extremely long
+        safe_chunk = chunk[:2000]  # cap each chunk to 2k characters
+        formatted_context += f"CHUNK {i+1}:\n{safe_chunk}\n\n"
+    
+    # Create the prompt
+    prompt = f"""[INST]
+CONTEXT INFORMATION:
+{formatted_context}
+
+USER QUESTION:
+{query}
+
+INSTRUCTIONS FOR YOUR RESPONSE:
+- Answer the user's question based on the provided context information.
+- If the context doesn't contain the information needed to answer the question, say so clearly.
+- Be concise and direct in your response.
+- Focus only on answering the specific question asked.
+- Do not mention that your answer is based on the provided context.
+- Do not apologize or use phrases like "Based on the provided information".
+- If you find relevant information in the context, provide a detailed and helpful answer.
+- Use simple, clear language.
+{'- Respond in first person, as if you are the user.' if first_person_mode else ''}
+
+CRITICAL RULES:
+- Never make up information that isn't in the context.
+- Never say "I don't have information" if the information is actually in the context.
+- If the context contains the answer, always provide it.
+[/INST]"""
+    
+    return prompt
 
 def generate_response(query: str, context_chunks: List[Any], first_person_mode: bool = False) -> str:
     """
@@ -254,128 +379,126 @@ def generate_response(query: str, context_chunks: List[Any], first_person_mode: 
         The generated response
     """
     try:
-        # Classify query type
-        query_type, confidence = classify_query_type(query)
-        logger.info(f"Query classified as {query_type.value} with confidence {confidence:.2f}")
-        
-        # Check if the query contains first-person references
-        has_first_person = any(word in query.lower() for word in ["i ", "my ", "me ", "mine ", "i've ", "i'm ", "i'll ", "i'd "])
-        use_first_person = first_person_mode or has_first_person
-        
-        # Create system prompt based on query type
-        system_message = create_system_prompt(query_type, use_first_person)
-        
-        # Process context chunks
-        context_content = ""
-        for i, chunk in enumerate(context_chunks):
-            # Extract content based on chunk type
-            if hasattr(chunk, 'page_content') and hasattr(chunk, 'metadata'):
-                content = chunk.page_content
-                metadata = chunk.metadata
+        # Extract content from chunks if they are dictionaries
+        context_content = []
+        for chunk in context_chunks:
+            if isinstance(chunk, dict):
+                content = chunk.get('content', '')
+                if content:
+                    context_content.append(content)
+            elif hasattr(chunk, 'page_content'):
+                context_content.append(chunk.page_content)
             else:
-                content = chunk.get("content", "")
-                metadata = chunk.get("metadata", {})
-            
-            if content:
-                source_info = f"[SOURCE {i+1}]: "
-                if metadata:
-                    if "title" in metadata:
-                        source_info += f"Title: {metadata['title']} | "
-                    if "source" in metadata:
-                        source_info += f"Source: {metadata['source']} | "
-                
-                context_content += f"{source_info}\n{content}\n\n"
+                context_content.append(str(chunk))
         
-        # Log context usage
-        logger.info(f"Using {len(context_chunks)} chunks for {query_type.value} query")
-        logger.info(f"Context content length: {len(context_content)} chars")
+        # Get AI config to know max_tokens
+        ai_config = get_ai_config()
         
-        # Create the full prompt
-        prompt = f"""<s>[INST] {system_message}
-
-CONTEXT INFORMATION:
-{context_content}
-
-USER QUESTION: {query}
-
-Please provide your answer based strictly on the context above: [/INST]"""
-
-        # Check prompt length and truncate if necessary
-        estimated_tokens = len(prompt) / 4
-        max_context = settings.LLM_CONTEXT_WINDOW - 1024
+        # Truncate context to fit within context window
+        truncated_context = truncate_context_to_fit(query, context_content, ai_config["max_tokens"])
         
-        if estimated_tokens > max_context:
-            logger.warning(f"Prompt too long (est. {estimated_tokens} tokens), truncating context")
-            keep_chars = int(max_context * 3) - len(system_message) - len(query) - 300
-            keep_chars = max(keep_chars, 500)
-            
-            if len(context_content) > keep_chars:
-                context_content = "..." + context_content[-keep_chars:]
-            
-            prompt = f"""<s>[INST] {system_message}
-
-Context:
-{context_content}
-
-User Question: {query} [/INST]"""
+        # Generate the prompt
+        prompt = generate_prompt(query, truncated_context, first_person_mode)
         
-        # Get the LLM model
-        model = get_llm_model()
+        # Log the prompt length and token estimate
+        estimated_tokens = estimate_token_count(prompt)
+        logger.info(f"Generated prompt with {len(prompt)} characters, estimated {estimated_tokens} tokens")
         
-        # Get LLM parameters from configuration
-        config = get_ai_config()
+        # Validate that prompt + response fits within context window
+        total_tokens_needed = estimated_tokens + ai_config["max_tokens"]
+        if total_tokens_needed > settings.LLM_CONTEXT_WINDOW:
+            logger.error(f"Total tokens needed ({total_tokens_needed}) exceeds context window ({settings.LLM_CONTEXT_WINDOW})")
+            return "The question requires too much context to process. Please try a more specific question or upload fewer/shorter documents."
         
-        # Generate response with configured parameters
-        response = model(
+        # Initialize the LLM
+        llm = get_llm()
+        
+        # Generate the response
+        logger.info("Generating response with LLM")
+        raw_response = llm(
             prompt,
-            max_tokens=config["max_tokens"],
-            temperature=config["temperature"],
-            top_p=config["top_p"],
-            top_k=config["top_k"],
-            repeat_penalty=config["repeat_penalty"],
-            stop=["</s>", "[INST]", "[/INST]", "USER QUESTION:", "CONTEXT INFORMATION:"]
+            max_tokens=ai_config["max_tokens"],
+            temperature=ai_config["temperature"],
+            top_p=ai_config["top_p"],
+            top_k=ai_config["top_k"],
+            repeat_penalty=ai_config["repeat_penalty"]
         )
-        
-        # Extract response text
-        if isinstance(response, dict) and 'choices' in response:
-            raw_answer = response['choices'][0]['text'].strip()
-        elif isinstance(response, str):
-            raw_answer = response.strip()
+
+        # Extract text from response depending on type
+        if isinstance(raw_response, str):
+            response_text = raw_response
+        elif isinstance(raw_response, dict):
+            # llama_cpp returns a dict with 'choices'
+            response_text = raw_response.get("choices", [{}])[0].get("text", "")
         else:
-            raw_answer = str(response).strip()
+            # Fallback to string representation
+            response_text = str(raw_response)
+
+        # Clean and validate the response
+        cleaned_response = validate_and_clean_response(response_text, query, context_chunks)
         
-        # Validate and clean the response
-        final_answer = validate_and_clean_response(raw_answer, query, context_chunks)
+        # Check if the response is empty or too short
+        if not cleaned_response or len(cleaned_response) < ai_config["min_response_length"]:
+            logger.warning("LLM returned empty response")
+            return "I couldn't find a good answer to your question in the provided documents. Please try rephrasing your question or upload more relevant documents."
         
-        logger.info(f"Generated response (length: {len(final_answer)} chars): {final_answer[:100]}...")
-        
-        return final_answer
-        
+        return cleaned_response
     except Exception as e:
-        error_msg = f"Error generating response: {str(e)}"
-        logger.error(error_msg)
-        return f"I apologize, but I encountered an error while processing your request. Please try again with a different question."
+        logger.error(f"Error generating response: {str(e)}")
+        logger.exception("Full exception details:")
+        return f"Error generating response: {str(e)}"
 
 # Remove the global cache as it can cause inconsistent responses
 async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> str:
     """
-    Generate an answer to a query using the provided context chunks
+    Generate an answer to a query using the LLM and context chunks
     
     Args:
         query: The user's query
-        context_chunks: List of context chunks to use for answering
+        context_chunks: The context chunks to use for generating the answer
         
     Returns:
         The generated answer
     """
     try:
-        # Check if the query contains first-person references
-        first_person_mode = any(word in query.lower() for word in ["i ", "my ", "me ", "mine ", "i've ", "i'm ", "i'll ", "i'd "])
+        logger.info(f"Generating answer for query: '{query}' with {len(context_chunks)} context chunks")
+        
+        # Check if we have any context chunks
+        if not context_chunks:
+            logger.warning("No context chunks provided for query")
+            return "I don't have enough information to answer that question. Please upload relevant documents first or try a different question."
+        
+        # Log the scores of the context chunks
+        scores = [chunk.get('score', 0) for chunk in context_chunks]
+        logger.info(f"Context chunk scores: {[round(score, 2) for score in scores]}")
+        
+        # Extract content from chunks
+        context_content = []
+        for i, chunk in enumerate(context_chunks):
+            # Get content and metadata
+            content = chunk.get('content', '')
+            metadata = chunk.get('metadata', {})
+            score = chunk.get('score', 0)
+            
+            # Log chunk details
+            logger.debug(f"Chunk {i+1} - Score: {score:.2f}, Source: {metadata.get('source', 'unknown')}, Length: {len(content)} chars")
+            
+            # Add content to context
+            if content:
+                context_content.append(content)
         
         # Generate response
-        response = generate_response(query, context_chunks, first_person_mode)
+        logger.info(f"Generating response with {len(context_content)} content chunks")
+        response = generate_response(query, context_content)
         
+        # Check if response is empty
+        if not response or len(response.strip()) < 10:
+            logger.warning("LLM returned empty response")
+            return "I couldn't find a good answer to your question in the provided documents. Please try rephrasing your question or upload more relevant documents."
+        
+        logger.info(f"Generated response of length {len(response)} chars")
         return response
     except Exception as e:
         logger.error(f"Error generating answer: {str(e)}")
-        return "I apologize, but I encountered an error while generating an answer. Please try again." 
+        logger.exception("Full exception details:")
+        return f"Error generating response: {str(e)}" 

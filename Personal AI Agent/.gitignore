@@ -20,11 +20,21 @@ var/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Environment Variables (SECURITY CRITICAL)
 .env
+.env.*
+!.env.example
 .venv
 venv/
 ENV/
+env/
+
+# API Keys and Secrets (NEVER COMMIT)
+*.key
+*.pem
+*.p12
+secrets.json
+credentials.json
 
 # IDE
 .idea/
@@ -38,6 +48,23 @@ data/vector_db/
 models/*.gguf
 .DS_Store
 
+# Logs (may contain sensitive data)
+logs/
+*.log
+app.log
+
 # Database
 *.db
 *.sqlite3
+personal_ai_agent.db
+
+# Backup files (may contain sensitive data)
+*.backup
+*.bak
+*.old
+*.orig
+
+# Security/Admin files
+admin_*.json
+backup_credentials.*
+*.secret

@@ -17,3 +17,5 @@ requests==2.32.4
 httpx==0.28.1
 python-dotenv==1.1.0
 openpyxl==3.1.5
+pypdf==5.6.1
+python-magic==0.4.27

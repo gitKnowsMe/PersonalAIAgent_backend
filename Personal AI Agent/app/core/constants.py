@@ -1,0 +1,104 @@
+"""
+Application constants to replace hard-coded values
+"""
+
+# Server Configuration Constants
+DEFAULT_HOST = "localhost"
+DEFAULT_PORT = 8000
+DEFAULT_DEBUG = True
+
+# Application Constants
+DEFAULT_VERSION = "0.1.0"
+DEFAULT_DESCRIPTION = "A fully private AI assistant for your documents"
+
+# Security Constants
+DEFAULT_TOKEN_EXPIRE_MINUTES = 15
+DEFAULT_LOGIN_ENDPOINT = "/api/login"
+DEFAULT_SECRET_KEY_LENGTH = 32
+
+# File Upload Constants
+MAX_FILE_SIZE_DEFAULT = 5 * 1024 * 1024  # 5MB
+SUPPORTED_FILE_EXTENSIONS = ['.txt', '.md', '.csv', '.pdf', '.docx']
+
+# LLM Constants
+LLM_CONTEXT_DEFAULT = 8192  # Increased context window for better performance
+LLM_THREADS_DEFAULT = 4
+LLM_TEMPERATURE_DEFAULT = 0.7
+LLM_TOP_P_DEFAULT = 0.9
+LLM_TOP_K_DEFAULT = 40
+LLM_MAX_TOKENS_DEFAULT = 512  # Reduced to allow more context
+LLM_REPEAT_PENALTY_DEFAULT = 1.1
+
+# Embedding Constants
+EMBEDDING_MODEL_PRIMARY = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL_FALLBACK = "paraphrase-MiniLM-L3-v2"
+EMBEDDING_DIMENSION = 384
+EMBEDDING_BATCH_SIZE_DEFAULT = 32
+EMBEDDING_NORMALIZE = True
+
+# Vector Store Constants
+VECTOR_SEARCH_TOP_K_DEFAULT = 20
+VECTOR_SIMILARITY_THRESHOLD_DEFAULT = 0.2
+VECTOR_MAX_CHUNKS_DEFAULT = 10
+VECTOR_CHUNK_OVERLAP_DEFAULT = 0.2
+VECTOR_SCORE_THRESHOLD = 0.1
+MAX_CHUNKS_PER_TYPE = 3
+MAX_TOTAL_CHUNKS = 5
+HIGH_QUALITY_SCORE_THRESHOLD = 0.85
+
+# Database Constants
+DATABASE_TIMEOUT_DEFAULT = 5
+DATABASE_POOL_PRE_PING = True
+SQLITE_THREAD_CHECK = False
+
+# Logging Constants
+LOG_LEVEL_DEFAULT = "INFO"
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
+LOG_BACKUP_COUNT = 5
+
+# Metal/GPU Constants
+METAL_N_GPU_LAYERS_DEFAULT = 1
+USE_METAL_DEFAULT = True
+
+# API Constants
+API_V1_PREFIX = "/api"
+OPENAPI_URL_SUFFIX = "/openapi.json"
+
+# CORS Constants
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ["*"]
+CORS_ALLOW_HEADERS = ["*"]
+
+# Directory Names
+LOGS_DIR = "logs"
+STATIC_DIR = "static"
+UPLOADS_DIR = "uploads"
+MODELS_DIR = "models"
+DATA_DIR = "data"
+VECTOR_DB_DIR = "vector_db"
+
+# Default Model Filenames
+DEFAULT_LLM_MODEL_FILENAME = "mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+
+# Response Template Constants
+MIN_RESPONSE_LENGTH_DEFAULT = 10
+MAX_RESPONSE_LENGTH_DEFAULT = 2048
+HALLUCINATION_THRESHOLD_DEFAULT = 0.9
+
+# Validation Constants
+USERNAME_MIN_LENGTH = 3
+USERNAME_MAX_LENGTH = 50
+PASSWORD_MIN_LENGTH = 8
+EMAIL_MAX_LENGTH = 254
+TITLE_MAX_LENGTH = 200
+DESCRIPTION_MAX_LENGTH = 1000
+
+# HTTP Status Code Mappings (for consistency)
+HTTP_SUCCESS = 200
+HTTP_CREATED = 201
+HTTP_BAD_REQUEST = 400
+HTTP_UNAUTHORIZED = 401
+HTTP_NOT_FOUND = 404
+HTTP_REQUEST_ENTITY_TOO_LARGE = 413
+HTTP_INTERNAL_SERVER_ERROR = 500

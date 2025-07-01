@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import logging
 from datetime import datetime
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.security import get_current_user
@@ -14,6 +15,15 @@ from app.db.database import get_db
 from app.db.models import Document, User
 from app.schemas.document import DocumentCreate, DocumentResponse
 from app.utils.document_processor import process_document
+from app.utils.file_security import (
+    sanitize_filename, 
+    generate_secure_filename,
+    validate_file_type,
+    validate_file_extension,
+    create_secure_path,
+    validate_upload_directory,
+    scan_file_for_threats
+)
 
 # Get the logger
 logger = logging.getLogger("personal_ai_agent")
@@ -34,12 +44,35 @@ async def upload_document(
     logger.info(f"Document upload attempt by user {current_user.username}: {title}")
     
     try:
-        # Check file size
-        file_size = 0
+        # Validate upload directory first
+        if not validate_upload_directory(settings.UPLOAD_DIR):
+            logger.error(f"Upload directory validation failed: {settings.UPLOAD_DIR}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Upload directory is not accessible"
+            )
+        
+        # Basic filename validation
+        if not file.filename or not file.filename.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename cannot be empty"
+            )
+        
+        # Validate file extension
+        if not validate_file_extension(file.filename):
+            logger.warning(f"Upload failed: Invalid file extension for user {current_user.username}: {file.filename}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File type not supported. Allowed extensions: {', '.join(settings.SUPPORTED_EXTENSIONS)}"
+            )
+        
+        # Read file contents
         contents = await file.read()
         file_size = len(contents)
         await file.seek(0)
         
+        # Check file size
         if file_size > settings.MAX_FILE_SIZE:
             logger.warning(f"Upload failed: File too large ({file_size} bytes) for user {current_user.username}")
             raise HTTPException(
@@ -47,24 +80,67 @@ async def upload_document(
                 detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE} bytes"
             )
         
-        # Create user directory if it doesn't exist
-        user_dir = os.path.join(settings.UPLOAD_DIR, str(current_user.id))
-        os.makedirs(user_dir, exist_ok=True)
+        if file_size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File cannot be empty"
+            )
         
-        # Save file
-        file_path = os.path.join(user_dir, file.filename)
-        with open(file_path, "wb") as f:
-            f.write(contents)
+        # Validate file type by content (security check)
+        is_valid_type, detected_mime = validate_file_type(contents, file.filename)
+        if not is_valid_type:
+            logger.warning(f"Upload failed: Invalid file type detected for user {current_user.username}: {detected_mime}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File type validation failed. Detected type: {detected_mime}"
+            )
         
-        # Create unique vector namespace
-        vector_namespace = f"user_{current_user.id}_doc_{title.replace(' ', '_')}"
+        # Scan file for security threats
+        is_safe, threat_issues = scan_file_for_threats(contents, file.filename)
+        if not is_safe:
+            logger.warning(f"Upload failed: Security threats detected for user {current_user.username}: {threat_issues}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File failed security scan: {'; '.join(threat_issues)}"
+            )
         
-        # Create document record
+        # Create secure file path (prevents path traversal)
+        secure_file_path, relative_path = create_secure_path(
+            settings.UPLOAD_DIR, 
+            current_user.id, 
+            file.filename
+        )
+        
+        # Ensure user directory exists
+        user_dir = Path(secure_file_path).parent
+        user_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save file securely
+        try:
+            with open(secure_file_path, "wb") as f:
+                f.write(contents)
+        except (OSError, PermissionError) as e:
+            logger.error(f"Failed to save file for user {current_user.username}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save uploaded file"
+            )
+        
+        # Log successful upload with security info
+        logger.info(f"Secure file upload successful for user {current_user.username}: "
+                   f"original='{file.filename}', secure='{Path(secure_file_path).name}', "
+                   f"size={file_size}, type={detected_mime}")
+        
+        # Create unique vector namespace using sanitized title
+        sanitized_title = sanitize_filename(title, max_length=50)
+        vector_namespace = f"user_{current_user.id}_doc_{sanitized_title}"
+        
+        # Create document record with secure file path
         new_document = Document(
             title=title,
             description=description,
-            file_path=file_path,
-            file_type=file.content_type,
+            file_path=secure_file_path,  # Use secure path instead of original
+            file_type=detected_mime,     # Use detected MIME type instead of content_type
             file_size=file_size,
             owner_id=current_user.id,
             vector_namespace=vector_namespace

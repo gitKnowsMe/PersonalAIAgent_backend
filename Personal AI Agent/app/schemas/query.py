@@ -1,11 +1,17 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 
 class QueryBase(BaseModel):
     """Base query schema"""
-    question: str
+    question: str = Field(..., min_length=1, max_length=5000, description="User question")
     document_id: Optional[int] = None
+    
+    @validator('question')
+    def validate_question(cls, v):
+        if not v.strip():
+            raise ValueError('Question cannot be empty')
+        return v.strip()
 
 class QueryCreate(QueryBase):
     """Schema for creating a query"""

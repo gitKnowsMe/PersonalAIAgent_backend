@@ -1,11 +1,19 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
+
+from app.core.constants import TITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH
 
 class DocumentBase(BaseModel):
     """Base document schema"""
-    title: str
-    description: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=TITLE_MAX_LENGTH, description="Document title")
+    description: Optional[str] = Field(None, max_length=DESCRIPTION_MAX_LENGTH, description="Document description")
+    
+    @validator('title')
+    def validate_title(cls, v):
+        if not v.strip():
+            raise ValueError('Title cannot be empty')
+        return v.strip()
 
 class DocumentCreate(DocumentBase):
     """Schema for creating a document"""

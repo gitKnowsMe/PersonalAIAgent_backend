@@ -68,8 +68,8 @@ async def ask_question(
             }
             
         # Analyze the query type to provide better responses
-        is_vacation_query, is_skills_query, is_expense_query, years = check_query_type(query.question)
-        logger.info(f"Query types detected - Vacation: {is_vacation_query}, Skills: {is_skills_query}, Expense: {is_expense_query}, Years: {years}")
+        is_vacation_query, is_skills_query, is_expense_query, is_prompt_engineering_query, years = check_query_type(query.question)
+        logger.info(f"Query types detected - Vacation: {is_vacation_query}, Skills: {is_skills_query}, Expense: {is_expense_query}, Prompt Engineering: {is_prompt_engineering_query}, Years: {years}")
         
         # Search for similar chunks
         try:
@@ -91,6 +91,8 @@ async def ask_question(
             # Provide a more specific message based on query type
             if is_vacation_query and is_skills_query and is_expense_query:
                 answer = "I couldn't find any information about your vacation, skills, or expenses in the uploaded documents. Please upload relevant documents or try a more specific question."
+            elif is_prompt_engineering_query:
+                answer = "I couldn't find any information about prompt engineering in your uploaded documents. Please upload relevant documents about AI, machine learning, or prompt engineering and try again."
             elif is_vacation_query:
                 if years:
                     answer = f"I couldn't find any information about your vacation in {', '.join(years)}. Please upload relevant travel documents or try a different question."
