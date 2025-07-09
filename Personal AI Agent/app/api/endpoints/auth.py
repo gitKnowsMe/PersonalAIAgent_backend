@@ -52,12 +52,12 @@ async def login(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    logger.info(f"[DEBUG] Login attempt for username: {form_data.username}")
+    logger.info(f"Login attempt for username: {form_data.username}")
     
     # Check if user exists
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user:
-        logger.warning(f"[DEBUG] Login failed: User {form_data.username} not found")
+        logger.warning(f"Login failed: User {form_data.username} not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -66,7 +66,7 @@ async def login(
     
     # Check if password is correct
     if not verify_password(form_data.password, user.hashed_password):
-        logger.warning(f"[DEBUG] Login failed: Incorrect password for user {form_data.username}")
+        logger.warning(f"Login failed: Incorrect password for user {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -79,5 +79,5 @@ async def login(
         data={"sub": user.username},
         expires_delta=access_token_expires
     )
-    logger.info(f"[DEBUG] Login successful for username: {form_data.username}")
+    logger.info(f"Login successful for username: {form_data.username}")
     return {"access_token": access_token, "token_type": "bearer"} 

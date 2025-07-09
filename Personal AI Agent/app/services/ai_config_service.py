@@ -1,12 +1,17 @@
 """
 AI Configuration service for managing AI behavior and responses
+Follows best practices: environment-based configuration, no hardcoded values, validation
 """
 
-from typing import Dict, List, Any
+import os
+import json
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 
 from app.core.exceptions import ConfigurationError
+from app.core.config import settings
 
 
 class AIBehaviorMode(str, Enum):
@@ -25,230 +30,176 @@ class ResponseValidationLevel(str, Enum):
 
 @dataclass
 class AIConfig:
-    """AI Configuration settings"""
+    """AI Configuration settings loaded from environment variables and config files"""
     # Behavior Settings
-    behavior_mode: AIBehaviorMode = AIBehaviorMode.BALANCED
-    validation_level: ResponseValidationLevel = ResponseValidationLevel.MINIMAL
-    enable_hallucination_detection: bool = False
-    enable_response_caching: bool = False
+    behavior_mode: AIBehaviorMode = field(default_factory=lambda: AIBehaviorMode(
+        os.getenv("AI_BEHAVIOR_MODE", AIBehaviorMode.BALANCED.value)
+    ))
+    validation_level: ResponseValidationLevel = field(default_factory=lambda: ResponseValidationLevel(
+        os.getenv("AI_VALIDATION_LEVEL", ResponseValidationLevel.MODERATE.value)
+    ))
     
     # Response Quality Settings
-    min_response_length: int = 10
-    max_response_length: int = 2048
-    require_context_reference: bool = False
-    allow_general_knowledge_fallback: bool = True
+    min_response_length: int = field(default_factory=lambda: int(
+        os.getenv("AI_MIN_RESPONSE_LENGTH", "10")
+    ))
+    max_response_length: int = field(default_factory=lambda: int(
+        os.getenv("AI_MAX_RESPONSE_LENGTH", "2048")
+    ))
+    require_context_reference: bool = field(default_factory=lambda: 
+        os.getenv("AI_REQUIRE_CONTEXT_REFERENCE", "false").lower() == "true"
+    )
+    allow_general_knowledge_fallback: bool = field(default_factory=lambda: 
+        os.getenv("AI_ALLOW_GENERAL_KNOWLEDGE_FALLBACK", "true").lower() == "true"
+    )
     
-    # LLM Parameters
-    temperature: float = 0.7
-    top_p: float = 0.9
-    top_k: int = 40
-    max_tokens: int = 1024
-    repeat_penalty: float = 1.1
+    # LLM Parameters (from core settings with environment overrides)
+    temperature: float = field(default_factory=lambda: float(
+        os.getenv("AI_TEMPERATURE", str(settings.LLM_TEMPERATURE))
+    ))
+    top_p: float = field(default_factory=lambda: float(
+        os.getenv("AI_TOP_P", str(settings.LLM_TOP_P))
+    ))
+    top_k: int = field(default_factory=lambda: int(
+        os.getenv("AI_TOP_K", str(settings.LLM_TOP_K))
+    ))
+    max_tokens: int = field(default_factory=lambda: int(
+        os.getenv("AI_MAX_TOKENS", str(settings.LLM_MAX_TOKENS))
+    ))
+    repeat_penalty: float = field(default_factory=lambda: float(
+        os.getenv("AI_REPEAT_PENALTY", "1.05")
+    ))
     
-    # Search Parameters
-    search_top_k: int = 20
-    search_similarity_threshold: float = 0.2
-    search_max_chunks: int = 10
-    search_chunk_overlap: float = 0.2
-    
-    # Hallucination Detection
-    hallucination_threshold: float = 0.9
-    hallucination_keywords: List[str] = field(default_factory=lambda: [
-        "I don't know", "I don't have", "I cannot", "I can't", 
-        "no information", "not provided", "not mentioned", "not specified", "not given"
-    ])
-    
-    # Validation Keywords
-    hallucination_indicators: List[str] = field(default_factory=lambda: [
-        "i am an ai language model",
-        "i am an artificial intelligence",
-        "i am a computer program",
-        "i am not able to",
-        "i cannot access",
-        "i do not have access"
-    ])
-    
-    error_indicators: List[str] = field(default_factory=lambda: [
-        "error generating",
-        "sorry, i encountered an error",
-        "please try again",
-        "i apologize, but",
-        "i'm having trouble",
-        "unable to generate"
-    ])
-    
-    context_required_phrases: List[str] = field(default_factory=lambda: [
-        "i don't have that specific information",
-        "not mentioned in the provided context",
-        "that information is not available in your documents",
-        "please upload relevant documents",
-        "try a different question"
-    ])
-
-
-@dataclass
-class QueryClassificationConfig:
-    """Query classification keywords configuration"""
-    general_ai_keywords: List[str] = field(default_factory=lambda: [
-        "prompt engineering", "few-shot", "one-shot", "chain-of-thought",
-        "temperature", "top-k", "top-p", "what is ai", "machine learning",
-        "artificial intelligence", "large language model", "llm", "gpt",
-        "transformer", "neural network", "deep learning", "model training",
-        "natural language processing", "nlp", "computer vision", "algorithm"
-    ])
-    
-    personal_data_keywords: List[str] = field(default_factory=lambda: [
-        "my", "i ", "expense", "skill", "vacation", "travel", "resume",
-        "experience", "job", "work", "spent", "cost", "trip", "qualification",
-        "education", "degree", "certification", "achievement", "project"
-    ])
-    
-    expense_keywords: List[str] = field(default_factory=lambda: [
-        "money", "spend", "spent", "expense", "expenses", "cost", "budget",
-        "dollar", "$", "purchase", "transaction", "bill", "total", "payment",
-        "finance", "financial", "receipt", "invoice", "charge"
-    ])
-    
-    skills_keywords: List[str] = field(default_factory=lambda: [
-        "technical", "skill", "skills", "resume", "cv", "qualification",
-        "experience", "expertise", "proficiency", "ability", "programming",
-        "developer", "software", "engineer", "coding", "framework",
-        "language", "technology", "automation", "testing", "competency"
-    ])
-    
-    vacation_keywords: List[str] = field(default_factory=lambda: [
-        "vacation", "travel", "trip", "holiday", "went", "go", "visit",
-        "traveled", "journey", "tour", "flight", "hotel", "resort",
-        "beach", "destination", "tourism", "sightseeing", "adventure"
-    ])
-
-
-@dataclass
-class ResponseTemplatesConfig:
-    """Response templates configuration"""
-    no_context_found: Dict[str, str] = field(default_factory=lambda: {
-        "general": "I don't have that specific information in your uploaded documents. Please upload relevant documents or try a different question.",
-        "expense": "I couldn't find any expense information for that period. Please upload relevant financial documents and try again.",
-        "skills": "I couldn't find any information about your technical skills. Please upload your resume or CV and try again.",
-        "vacation": "I couldn't find any information about your travels. Please upload relevant travel documents or try a different question."
-    })
-    
-    insufficient_context: Dict[str, str] = field(default_factory=lambda: {
-        "general": "The available information is limited. Could you provide more specific details or upload additional documents?",
-        "financial": "I found some financial information but need more details to provide an accurate answer.",
-        "personal": "I found some personal information but need more context to answer completely."
-    })
-    
-    hallucination_detected: Dict[str, str] = field(default_factory=lambda: {
-        "personal_query": "I don't have that specific information in your uploaded documents. Please upload relevant documents or try a different question.",
-        "general_query": "That information is not available in your uploaded documents.",
-        "ai_knowledge": "I can only answer based on information in your uploaded documents. For general knowledge questions, please specify if you want me to search your documents for related information."
-    })
-    
-    error_fallback: Dict[str, str] = field(default_factory=lambda: {
-        "processing": "I apologize, but I encountered an issue while processing your request. Please try rephrasing your question.",
-        "generation": "I'm having trouble generating a complete response. Please try rephrasing your question or asking about a specific aspect of the topic.",
-        "search": "I couldn't search your documents properly. Please try again with a different question."
-    })
+    # Search Parameters (from core settings with environment overrides)
+    search_top_k: int = field(default_factory=lambda: int(
+        os.getenv("AI_SEARCH_TOP_K", str(settings.VECTOR_SEARCH_TOP_K))
+    ))
+    search_similarity_threshold: float = field(default_factory=lambda: float(
+        os.getenv("AI_SEARCH_SIMILARITY_THRESHOLD", str(settings.VECTOR_SIMILARITY_THRESHOLD))
+    ))
+    search_max_chunks: int = field(default_factory=lambda: int(
+        os.getenv("AI_SEARCH_MAX_CHUNKS", "7")
+    ))
+    search_chunk_overlap: float = field(default_factory=lambda: float(
+        os.getenv("AI_SEARCH_CHUNK_OVERLAP", "0.1")
+    ))
 
 
 @dataclass
 class SystemPromptsConfig:
-    """System prompts configuration"""
-    base: str = """You are a helpful assistant that STRICTLY answers based ONLY on the provided context.
+    """System prompts configuration loaded from files or environment"""
+    
+    def __init__(self, config_dir: Optional[Path] = None):
+        self.config_dir = config_dir or Path(settings.BASE_DIR) / "config"
+        self._load_prompts()
+    
+    def _load_prompts(self):
+        """Load system prompts from configuration files or environment variables"""
+        self.base = self._load_prompt("base", self._get_default_base_prompt())
+        self.personal_data = self._load_prompt("personal_data", self._get_default_personal_data_prompt())
+        self.general_knowledge = self._load_prompt("general_knowledge", self._get_default_general_knowledge_prompt())
+    
+    def _load_prompt(self, prompt_name: str, default_value: str) -> str:
+        """Load a prompt from file or environment variable"""
+        # Try environment variable first
+        env_var = f"AI_PROMPT_{prompt_name.upper()}"
+        if env_value := os.getenv(env_var):
+            return env_value
+        
+        # Try configuration file
+        config_file = self.config_dir / f"{prompt_name}_prompt.txt"
+        if config_file.exists():
+            return config_file.read_text().strip()
+        
+        # Use default
+        return default_value
+    
+    def _get_default_base_prompt(self) -> str:
+        """Get default base system prompt"""
+        return """You are a helpful assistant that answers based on the provided context.
 
 CRITICAL RULES:
-1. NEVER make up information that is not explicitly stated in the context
-2. Use EXACT numbers, dates, and amounts from the context
-3. If information is missing or unclear, say "I don't have that specific information in the provided context"
-4. When providing financial amounts, use the EXACT dollar figures from the context
-5. For dates and timeframes, use only what is explicitly mentioned"""
+1. Use information from the provided context when available
+2. If information is missing, clearly state that it's not available in the provided context
+3. Be concise and direct - focus on the exact question asked
+4. Use exact numbers, dates, and amounts when provided in context
+5. For location-specific queries (e.g., "Rome", "Istanbul"), ONLY use information that explicitly mentions that exact location
+6. Do NOT mix information from different locations - each location should be treated separately"""
     
-    personal_data: str = """
-IMPORTANT: This is a personal information question. Focus ONLY on the user's specific data from the context. DO NOT provide general knowledge or generic answers."""
+    def _get_default_personal_data_prompt(self) -> str:
+        """Get default personal data prompt"""
+        return """
+
+IMPORTANT: This is a personal information question. Focus on the user's specific data from the context."""
     
-    general_knowledge: str = """
-IMPORTANT: This appears to be a general knowledge question. You should ONLY answer if the specific information is explicitly mentioned in the provided context. DO NOT use your general training knowledge. If the context doesn't contain the answer, clearly state that the information is not available in the user's documents."""
-    
-    expense_query: str = """
-EXPENSE INFORMATION RULES - CRITICAL FOR ACCURACY:
-- Find the EXACT month and year mentioned in the query (e.g., "March 2023")
-- Look for that EXACT combination in the context
-- Use the EXACT "Total Spent:" amount shown for that specific month/year
-- DO NOT use amounts from other months or years
-- If context shows "March 2023... Total Spent: $2650" then answer is $2650
-- DO NOT round, estimate, or modify the amounts
-- If the exact month/year combination is not found, say so clearly"""
-    
-    skills_query: str = """
-TECHNICAL SKILLS RULES:
-- List ONLY skills explicitly mentioned in the context
-- Include specific programming languages, tools, frameworks as written
-- Do NOT infer skills that aren't directly stated
-- Focus ONLY on professional and technical information
-- If context mentions "8 years experience" use that exact phrase
-- Separate clearly between technical skills and work experience"""
-    
-    vacation_query: str = """
-VACATION INFORMATION RULES:
-- Look ONLY for exact vacation details in the context
-- Use EXACT destination names, years, and costs as written
-- If a specific year is mentioned in the question (like 2023), ONLY provide information about vacations from that EXACT year
-- If you find "Thailand 2023" with "$5000", use those exact details
-- DO NOT combine information from different trips or years"""
+    def _get_default_general_knowledge_prompt(self) -> str:
+        """Get default general knowledge prompt"""
+        return """
+
+IMPORTANT: Answer based on the provided context. If the context doesn't contain the answer, clearly state that the information is not available in the user's documents."""
 
 
 @dataclass
-class DocumentTypeKeywordsConfig:
-    """Document type classification keywords"""
-    vacation: List[str] = field(default_factory=lambda: [
-        'vacation', 'travel', 'trip', 'holiday', 'airline', 'flight', 'hotel', 
-        'rental car', 'thailand', 'phuket', 'bangkok', 'resort', 'tour', 'beach', 
-        'island', 'visit', 'journey', 'tourism', 'sightseeing', 'adventure'
-    ])
+class ResponseTemplatesConfig:
+    """Response templates configuration loaded from files or environment"""
     
-    resume: List[str] = field(default_factory=lambda: [
-        'resume', 'cv', 'work history', 'experience', 'education', 'skill', 
-        'professional', 'job', 'technical', 'programming', 'framework', 'language', 
-        'certification', 'qualification', 'expertise', 'proficiency', 'accomplishment',
-        'career', 'developer', 'software', 'engineer', 'coding', 'technology', 
-        'automation', 'testing', 'competency'
-    ])
+    def __init__(self, config_dir: Optional[Path] = None):
+        self.config_dir = config_dir or Path(settings.BASE_DIR) / "config"
+        self._load_templates()
     
-    expense: List[str] = field(default_factory=lambda: [
-        'expense', 'budget', 'cost', 'spent', '$', 'dollar', 'payment', 'finance', 
-        'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 
-        'september', 'october', 'november', 'december', 'money', 'price', 'pay', 
-        'paid', 'bill', 'invoice', 'receipt', 'purchase', 'transaction', 'charge'
-    ])
+    def _load_templates(self):
+        """Load response templates from configuration files"""
+        self.no_context_found = self._load_template_dict("no_context_found", {
+            "general": "I don't have that specific information in your uploaded documents. Please upload relevant documents or try a different question.",
+            "financial": "I couldn't find any financial information for that request. Please upload relevant documents.",
+            "personal": "I couldn't find any personal information for that request. Please upload relevant documents."
+        })
+        
+        self.error_fallback = self._load_template_dict("error_fallback", {
+            "processing": "I apologize, but I encountered an issue while processing your request. Please try rephrasing your question.",
+            "generation": "I'm having trouble generating a complete response. Please try rephrasing your question.",
+            "search": "I couldn't search your documents properly. Please try again with a different question."
+        })
     
-    prompt_engineering: List[str] = field(default_factory=lambda: [
-        'prompt', 'engineering', 'llm', 'ai', 'language model', 'gpt', 'instruction',
-        'artificial intelligence', 'chatgpt', 'chat', 'completion', 'token',
-        'parameter', 'temperature', 'top-p', 'top-k', 'context window', 'few-shot',
-        'zero-shot', 'one-shot', 'chain of thought', 'cot', 'role prompting', 
-        'system prompt', 'machine learning', 'transformer', 'neural network', 
-        'deep learning', 'model training', 'natural language processing', 'nlp'
-    ])
+    def _load_template_dict(self, template_name: str, default_dict: Dict[str, str]) -> Dict[str, str]:
+        """Load a template dictionary from file or use default"""
+        config_file = self.config_dir / f"{template_name}_templates.json"
+        if config_file.exists():
+            try:
+                return json.loads(config_file.read_text())
+            except json.JSONDecodeError:
+                pass
+        return default_dict
 
 
 class AIConfigService:
-    """Service for managing AI configuration"""
+    """Service for managing AI configuration with environment-based settings"""
     
-    def __init__(self):
+    def __init__(self, config_dir: Optional[Path] = None):
+        self.config_dir = config_dir or Path(settings.BASE_DIR) / "config"
         self._ai_config = AIConfig()
-        self._query_classification = QueryClassificationConfig()
-        self._response_templates = ResponseTemplatesConfig()
-        self._system_prompts = SystemPromptsConfig()
-        self._document_type_keywords = DocumentTypeKeywordsConfig()
+        self._system_prompts = SystemPromptsConfig(config_dir)
+        self._response_templates = ResponseTemplatesConfig(config_dir)
     
     def get_ai_config(self) -> AIConfig:
         """Get the current AI configuration"""
         return self._ai_config
     
-    def get_query_classification_keywords(self) -> QueryClassificationConfig:
-        """Get query classification keywords"""
-        return self._query_classification
+    def get_system_prompt(self, query_type: str = "base", additional_rules: Optional[List[str]] = None) -> str:
+        """Get system prompt for a specific query type"""
+        base_prompt = self._system_prompts.base
+        
+        # Add type-specific prompt
+        if query_type == "personal_data":
+            base_prompt += self._system_prompts.personal_data
+        elif query_type == "general_knowledge":
+            base_prompt += self._system_prompts.general_knowledge
+        
+        # Add additional rules if provided
+        if additional_rules:
+            base_prompt += "\n\nADDITIONAL RULES:\n" + "\n".join(f"- {rule}" for rule in additional_rules)
+        
+        return base_prompt
     
     def get_response_template(self, category: str, subcategory: str = "general") -> str:
         """Get a response template"""
@@ -256,23 +207,6 @@ class AIConfigService:
         if templates and isinstance(templates, dict):
             return templates.get(subcategory, self._response_templates.error_fallback["generation"])
         return self._response_templates.error_fallback["generation"]
-    
-    def get_system_prompt(self, query_type: str, additional_rules: List[str] = None) -> str:
-        """Get system prompt for a specific query type"""
-        base_prompt = self._system_prompts.base
-        
-        type_prompt = getattr(self._system_prompts, query_type, "")
-        if type_prompt:
-            base_prompt += type_prompt
-        
-        if additional_rules:
-            base_prompt += "\n\nADDITIONAL RULES:\n" + "\n".join(f"- {rule}" for rule in additional_rules)
-        
-        return base_prompt
-    
-    def get_document_type_keywords(self) -> DocumentTypeKeywordsConfig:
-        """Get document type keywords"""
-        return self._document_type_keywords
     
     def update_ai_config(self, **kwargs) -> bool:
         """Update AI configuration settings"""
@@ -289,10 +223,40 @@ class AIConfigService:
     def reset_ai_config(self):
         """Reset AI configuration to defaults"""
         self._ai_config = AIConfig()
+    
+    def validate_config(self) -> bool:
+        """Validate the current configuration"""
+        try:
+            # Validate temperature range
+            if not 0.0 <= self._ai_config.temperature <= 2.0:
+                raise ConfigurationError("Temperature must be between 0.0 and 2.0")
+            
+            # Validate top_p range
+            if not 0.0 <= self._ai_config.top_p <= 1.0:
+                raise ConfigurationError("Top_p must be between 0.0 and 1.0")
+            
+            # Validate top_k
+            if self._ai_config.top_k < 1:
+                raise ConfigurationError("Top_k must be at least 1")
+            
+            # Validate max_tokens
+            if self._ai_config.max_tokens < 1:
+                raise ConfigurationError("Max_tokens must be at least 1")
+            
+            # Validate search parameters
+            if self._ai_config.search_top_k < 1:
+                raise ConfigurationError("Search_top_k must be at least 1")
+            
+            if not 0.0 <= self._ai_config.search_similarity_threshold <= 1.0:
+                raise ConfigurationError("Search_similarity_threshold must be between 0.0 and 1.0")
+            
+            return True
+        except Exception as e:
+            raise ConfigurationError(f"Configuration validation failed: {e}")
 
 
 # Global instance for backward compatibility
-_default_ai_config_service: AIConfigService = None
+_default_ai_config_service: Optional[AIConfigService] = None
 
 
 def get_ai_config_service() -> AIConfigService:
@@ -301,5 +265,6 @@ def get_ai_config_service() -> AIConfigService:
     
     if _default_ai_config_service is None:
         _default_ai_config_service = AIConfigService()
+        _default_ai_config_service.validate_config()
     
     return _default_ai_config_service

@@ -103,12 +103,9 @@ def validate_file_type(file_content: bytes, filename: str, allowed_types: List[s
         Tuple of (is_valid, detected_mime_type)
     """
     if allowed_types is None:
+        # PDF-only processing
         allowed_types = [
-            'text/plain',
-            'text/csv', 
-            'text/markdown',
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            'application/pdf'
         ]
     
     try:

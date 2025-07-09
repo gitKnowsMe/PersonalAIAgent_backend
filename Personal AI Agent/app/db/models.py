@@ -39,6 +39,7 @@ class Document(Base):
     description = Column(Text, nullable=True)  # Optional field, can be NULL
     file_path = Column(String(500), nullable=False)  # File paths can be long
     file_type = Column(String(10), nullable=False)  # e.g., 'pdf', 'txt', 'docx'
+    document_type = Column(String(20), nullable=False, default="generic")  # 'financial', 'long_form', 'generic'
     file_size = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     vector_namespace = Column(String(200), unique=True, nullable=False)
@@ -53,6 +54,7 @@ class Document(Base):
         CheckConstraint('file_size > 0', name='file_size_positive'),
         CheckConstraint('LENGTH(file_type) >= 2', name='file_type_min_length'),
         CheckConstraint('LENGTH(vector_namespace) >= 5', name='namespace_min_length'),
+        CheckConstraint("document_type IN ('financial', 'long_form', 'generic')", name='valid_document_type'),
     )
 
 class Query(Base):

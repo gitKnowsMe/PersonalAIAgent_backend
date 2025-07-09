@@ -99,13 +99,11 @@ class SentenceTransformerEmbeddingService(EmbeddingService):
         try:
             model = self._load_model()
             
-            logger.debug(f"Generating embeddings for {len(texts)} texts in batches of {self.batch_size}")
             
             # Process in batches for better memory management
             all_embeddings = []
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i:i + self.batch_size]
-                logger.debug(f"Processing batch {i // self.batch_size + 1} with {len(batch)} texts")
                 
                 try:
                     batch_embeddings = model.encode(
@@ -123,7 +121,6 @@ class SentenceTransformerEmbeddingService(EmbeddingService):
             
             # Combine all batch results
             embeddings = np.vstack(all_embeddings) if len(all_embeddings) > 1 else all_embeddings[0]
-            logger.debug(f"Successfully generated embeddings with shape {embeddings.shape}")
             
             return embeddings
             

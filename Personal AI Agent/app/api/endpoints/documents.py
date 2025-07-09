@@ -126,21 +126,39 @@ async def upload_document(
                 detail="Failed to save uploaded file"
             )
         
-        # Log successful upload with security info
-        logger.info(f"Secure file upload successful for user {current_user.username}: "
-                   f"original='{file.filename}', secure='{Path(secure_file_path).name}', "
-                   f"size={file_size}, type={detected_mime}")
+        # Early PDF classification for better organization
+        try:
+            from app.utils.processors.pdf_processor import PDFDocumentProcessor
+            from app.utils.document_classifier import detect_document_type
+            
+            # Extract initial content for classification
+            pdf_processor = PDFDocumentProcessor()
+            initial_content = await pdf_processor.extract_content(secure_file_path)
+            
+            # Classify the document
+            document_type = detect_document_type(initial_content[:5000], file.filename)  # Use first 5k chars for classification
+            logger.info(f"Classified PDF '{file.filename}' as: {document_type}")
+            
+        except Exception as classification_error:
+            logger.warning(f"Early classification failed, will classify during processing: {classification_error}")
+            document_type = "generic"  # Default fallback
         
-        # Create unique vector namespace using sanitized title
+        # Log successful upload with security info
+        logger.info(f"Secure PDF upload successful for user {current_user.username}: "
+                   f"original='{file.filename}', secure='{Path(secure_file_path).name}', "
+                   f"size={file_size}, type={detected_mime}, category={document_type}")
+        
+        # Create category-aware vector namespace
         sanitized_title = sanitize_filename(title, max_length=50)
         vector_namespace = f"user_{current_user.id}_doc_{sanitized_title}"
         
-        # Create document record with secure file path
+        # Create document record with secure file path and classification
         new_document = Document(
             title=title,
             description=description,
             file_path=secure_file_path,  # Use secure path instead of original
             file_type=detected_mime,     # Use detected MIME type instead of content_type
+            document_type=document_type, # Include the classified document type
             file_size=file_size,
             owner_id=current_user.id,
             vector_namespace=vector_namespace

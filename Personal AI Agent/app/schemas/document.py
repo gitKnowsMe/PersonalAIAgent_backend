@@ -38,6 +38,7 @@ class DocumentResponse(DocumentBase):
     id: int
     file_path: str
     file_type: Optional[str] = None
+    document_type: Optional[str] = "generic"
     file_size: Optional[int] = None
     vector_namespace: str
     owner_id: int

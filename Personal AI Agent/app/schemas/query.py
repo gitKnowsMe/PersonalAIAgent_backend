@@ -32,4 +32,6 @@ class QueryResponse(BaseModel):
     id: int
     question: str
     answer: str
-    created_at: datetime 
+    created_at: datetime
+    from_cache: Optional[bool] = False
+    response_time_ms: Optional[float] = None 

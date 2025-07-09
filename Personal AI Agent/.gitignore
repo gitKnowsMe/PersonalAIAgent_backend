@@ -68,3 +68,4 @@ personal_ai_agent.db
 admin_*.json
 backup_credentials.*
 *.secret
+logs/

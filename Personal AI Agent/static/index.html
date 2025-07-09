@@ -132,8 +132,18 @@
             <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header">Upload Document</div>
+                        <div class="card-header">📄 Upload PDF Document</div>
                         <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <small>
+                                    <strong>PDF Processing:</strong> Upload PDF documents for intelligent categorization:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>Financial:</strong> Bank statements, invoices (precise transaction matching)</li>
+                                        <li><strong>Long-form:</strong> 50+ page documents, research papers (deep analysis)</li>
+                                        <li><strong>Generic:</strong> Resumes, letters (balanced processing)</li>
+                                    </ul>
+                                </small>
+                            </div>
                             <form id="upload-form">
                                 <div class="mb-3">
                                     <label for="title" class="form-label">Title</label>
@@ -141,23 +151,27 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description"></textarea>
+                                    <textarea class="form-control" id="description" placeholder="Brief description of the PDF content"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="document" class="form-label">Document</label>
-                                    <input type="file" class="form-control" id="document" required>
+                                    <label for="document" class="form-label">PDF Document</label>
+                                    <input type="file" class="form-control" id="document" accept=".pdf" required>
+                                    <div class="form-text">Only PDF files are supported (Max: 10MB)</div>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Upload</button>
+                                <button type="submit" class="btn btn-primary">Upload PDF</button>
                             </form>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header">Your Documents</div>
+                        <div class="card-header">📚 Your PDF Documents</div>
                         <div class="card-body">
+                            <div class="mb-2 text-muted small">
+                                Documents are automatically categorized for optimal processing
+                            </div>
                             <div id="documents-list" class="list-group">
-                                <!-- Documents will be loaded here -->
+                                <!-- PDF documents will be loaded here with category badges -->
                             </div>
                         </div>
                     </div>

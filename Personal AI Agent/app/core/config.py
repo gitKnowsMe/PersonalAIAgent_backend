@@ -14,11 +14,9 @@ logger = logging.getLogger("personal_ai_agent")
 # Load environment variables from .env file (allow later duplicates to override earlier ones)
 load_dotenv(override=True)
 
-# Log environment variables for debugging
+# Load Metal settings
 metal_enabled = os.getenv("USE_METAL", str(USE_METAL_DEFAULT)).lower() == "true"
 metal_layers = int(os.getenv("METAL_N_GPU_LAYERS", str(METAL_N_GPU_LAYERS_DEFAULT)))
-print(f"DEBUG ENV: USE_METAL={metal_enabled}, METAL_N_GPU_LAYERS={metal_layers}")
-logger.info(f"DEBUG ENV: USE_METAL={metal_enabled}, METAL_N_GPU_LAYERS={metal_layers}")
 
 # Parse MAX_FILE_SIZE environment variable (handling comments if present)
 max_file_size_str = os.getenv("MAX_FILE_SIZE", str(MAX_FILE_SIZE_DEFAULT))
