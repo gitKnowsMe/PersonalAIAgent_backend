@@ -5,7 +5,7 @@ Classifies PDF documents into one of three optimized categories:
 - financial: Transaction-based documents (bank statements, invoices, receipts)
   * Processing: Small 500-char chunks for precise transaction matching
   * Strategy: Structured parsing with exact match capabilities
-- long_form: Documents 50+ pages (research papers, reports, contracts, manuals)
+- long_form: Documents 20+ pages (research papers, reports, contracts, manuals)
   * Processing: Large 1500-char chunks for comprehensive context
   * Strategy: Semantic analysis with deep understanding
 - generic: Personal documents (resumes, letters, personal documents)
@@ -27,7 +27,7 @@ class DocumentClassifier:
     
     Document Types:
     - financial: Bank statements, transactions - 1 transaction per chunk  
-    - long_form: Reports, articles 50+ pages - ~500 tokens per chunk with overlap
+    - long_form: Reports, articles 20+ pages - ~500 tokens per chunk with overlap
     - generic: Resumes, structured docs - section-based chunking
     """
     
@@ -532,13 +532,14 @@ class DocumentClassifier:
         return analysis
 
 
-def detect_document_type(text: str, filename: str) -> str:
+def detect_document_type(text: str, filename: str, metadata: Dict[str, Any] = None) -> str:
     """
-    Classify a document into one of three types based on content and filename.
+    Classify a document into one of three types based on content, filename, and metadata.
     
     Args:
         text: Extracted text content from the document
         filename: Original filename of the document
+        metadata: Optional metadata (e.g., page_count for PDFs)
         
     Returns:
         One of: 'financial', 'long_form', 'generic'
@@ -553,8 +554,8 @@ def detect_document_type(text: str, filename: str) -> str:
             logger.info(f"Classified '{filename}' as financial document")
             return "financial"
         
-        # Check for long-form document
-        if _is_long_form_document(text):
+        # Check for long-form document (with page count priority)
+        if _is_long_form_document(text, metadata):
             logger.info(f"Classified '{filename}' as long_form document")
             return "long_form"
         
@@ -627,23 +628,38 @@ def _is_financial_document(text_lower: str, filename_lower: str) -> bool:
     return False
 
 
-def _is_long_form_document(text: str) -> bool:
+def _is_long_form_document(text: str, metadata: Dict[str, Any] = None) -> bool:
     """
-    Check if PDF document is long-form based on length and structure.
-    Enhanced for PDF documents with 50+ pages requiring deep semantic analysis.
+    Check if PDF document is long-form based on page count, length and structure.
+    Enhanced for PDF documents with 20+ pages requiring deep semantic analysis.
     
     Args:
         text: Original text content (preserving case and formatting)
+        metadata: Optional metadata containing page_count and other PDF info
         
     Returns:
-        True if document appears to be long-form (50+ pages)
+        True if document appears to be long-form (20+ pages)
     """
-    # Enhanced token estimation for PDF documents
+    # Priority 1: Check page count from PDF metadata (most accurate)
+    if metadata and isinstance(metadata, dict):
+        page_count = metadata.get('page_count')
+        if page_count is not None:
+            logger.info(f"Using PDF page count: {page_count} pages")
+            if page_count >= 20:
+                logger.info(f"Document classified as long-form due to page count: {page_count} >= 20")
+                return True
+            elif page_count < 5:
+                logger.info(f"Document classified as short due to page count: {page_count} < 5")
+                return False
+            # For 5-19 pages, continue with content analysis
+    
+    # Priority 2: Enhanced token estimation for PDF documents
     # PDFs typically have more formatting characters
     estimated_tokens = len(text) / 3.5
     
-    # Threshold for 50+ page documents (approximately 10,000+ tokens)
-    if estimated_tokens <= 8000:
+    # Threshold for 20+ page documents (approximately 6,000+ tokens)
+    # Lowered from 8000 to 6000 to account for 20-page threshold instead of 50
+    if estimated_tokens <= 6000:
         return False
     
     # Check for multi-paragraph sections (2+ consecutive line breaks)

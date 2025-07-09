@@ -74,9 +74,18 @@ class PDFDocumentProcessor(BaseDocumentProcessor):
                 if not page_content:
                     continue
                 
-                # Add page breaks for better chunking
+                # Enhanced page breaks for long-form documents (20+ pages)
                 if i > 0:
-                    text_content += "\n\n--- Page Break ---\n\n"
+                    if len(documents) >= 20:
+                        # Long-form documents: Add page number and enhanced breaks
+                        text_content += f"\n\n--- Page {i+1} ---\n\n"
+                    else:
+                        # Standard documents: Simple page breaks
+                        text_content += "\n\n--- Page Break ---\n\n"
+                else:
+                    # First page for long-form documents
+                    if len(documents) >= 20:
+                        text_content += f"--- Page 1 ---\n\n"
                 
                 text_content += page_content
             

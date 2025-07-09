@@ -462,11 +462,14 @@ class BaseDocumentProcessor(ABC):
             content = await self.extract_content(document.file_path)
             logger.info(f"Extracted {len(content)} characters of content")
             
-            # Step 2: Classify document type
-            filename = document.file_path.split('/')[-1]  # Get filename from path
-            document_type = detect_document_type(content, filename)
+            # Step 2: Extract format-specific metadata for classification
+            format_metadata = self.extract_format_metadata(document.file_path)
             
-            # Step 3: Update document type in database
+            # Step 3: Classify document type (using metadata for better accuracy)
+            filename = document.file_path.split('/')[-1]  # Get filename from path
+            document_type = detect_document_type(content, filename, format_metadata)
+            
+            # Step 4: Update document type in database
             db = next(get_db())
             try:
                 db_document = db.query(Document).filter(Document.id == document.id).first()
@@ -480,10 +483,10 @@ class BaseDocumentProcessor(ABC):
             finally:
                 db.close()
             
-            # Step 4: Get type-specific processing parameters
+            # Step 5: Get type-specific processing parameters
             type_metadata = get_document_type_metadata(document_type)
             
-            # Step 5: Adjust chunking based on document type
+            # Step 6: Adjust chunking based on document type
             if document_type == "financial":
                 # Smaller chunks for financial documents
                 self._update_chunking_config(200, 20)  # Reduced from 500, 50
@@ -493,9 +496,6 @@ class BaseDocumentProcessor(ABC):
             else:
                 # Default chunking for generic documents
                 self._update_chunking_config(400, 80)  # Reduced from 1000, 200
-            
-            # Step 6: Extract format-specific metadata
-            format_metadata = self.extract_format_metadata(document.file_path)
             
             # Step 7: Extract content metadata using classifier
             content_metadata = {
