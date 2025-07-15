@@ -10,7 +10,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.constants import DEFAULT_DESCRIPTION, OPENAPI_URL_SUFFIX
 from app.db.database import get_db, Base, engine
-from app.api.endpoints import auth, documents, queries
+from app.api.endpoints import auth, documents, queries, gmail, emails, sources
 
 # Create logger for this module
 logger = logging.getLogger("personal_ai_agent")
@@ -25,6 +25,8 @@ async def lifespan(app: FastAPI):
     # Create necessary directories
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     os.makedirs(settings.VECTOR_DB_PATH, exist_ok=True)
+    os.makedirs(settings.EMAIL_STORAGE_DIR, exist_ok=True)
+    os.makedirs(settings.EMAIL_VECTOR_DB_PATH, exist_ok=True)
     logger.info("Created necessary directories")
     
     # Create database tables
@@ -72,6 +74,9 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["auth"])
 app.include_router(documents.router, prefix=settings.API_V1_STR, tags=["documents"])
 app.include_router(queries.router, prefix=settings.API_V1_STR, tags=["queries"])
+app.include_router(gmail.router, prefix=settings.API_V1_STR, tags=["gmail"])
+app.include_router(emails.router, prefix=settings.API_V1_STR, tags=["emails"])
+app.include_router(sources.router, prefix=settings.API_V1_STR, tags=["sources"])
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
@@ -90,6 +95,40 @@ async def favicon():
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "version": settings.VERSION}
+
+@app.get("/oauth/callback")
+async def oauth_callback(
+    code: str,
+    state: str = None
+):
+    """
+    Handle OAuth2 callback from Google - redirects to Gmail callback
+    """
+    from fastapi.responses import RedirectResponse
+    
+    # Redirect to the actual Gmail callback endpoint with the code
+    redirect_url = f"{settings.API_V1_STR}/gmail/callback?code={code}"
+    if state:
+        redirect_url += f"&state={state}"
+    
+    return RedirectResponse(url=redirect_url)
+
+@app.get("/api/gmail/auth")
+async def oauth_callback_alt(
+    code: str,
+    state: str = None
+):
+    """
+    Alternative OAuth2 callback endpoint for current Google Cloud Console configuration
+    """
+    from fastapi.responses import RedirectResponse
+    
+    # Redirect to the actual Gmail callback endpoint with the code
+    redirect_url = f"{settings.API_V1_STR}/gmail/callback?code={code}"
+    if state:
+        redirect_url += f"&state={state}"
+    
+    return RedirectResponse(url=redirect_url)
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):

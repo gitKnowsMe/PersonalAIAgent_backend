@@ -3,6 +3,7 @@ import logging
 import json
 import hashlib
 import time
+import re
 from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 
@@ -13,7 +14,7 @@ from app.services.ai_config_service import (
     get_ai_config_service, AIBehaviorMode,
     ResponseValidationLevel
 )
-from app.utils.response_filter import vacation_filter, financial_filter, response_validator
+from app.utils.response_filter import vacation_filter, financial_filter, email_filter, response_validator
 
 # Get the logger
 logger = logging.getLogger("personal_ai_agent")
@@ -206,6 +207,17 @@ FINANCIAL TRANSACTION KNOWLEDGE:
   * Foreign exchange fees related to transactions
   * Merchant names that might relate to the location
 
+EMAIL INVOICE EXTRACTION:
+- Emails marked with [EMAIL] contain invoice, receipt, or transaction information
+- Look for amounts in formats: $X.XX, USD X.XX, Total: $X, Amount: $X
+- Common invoice keywords: invoice, receipt, total, subtotal, amount due, balance
+- Company names may appear as: From: company@domain.com or in email signatures
+- Dates may be in various formats: MM/DD/YYYY, Month DD, YYYY, etc.
+- For questions like "How much was the [Company] invoice?":
+  * Find emails from or mentioning that company
+  * Extract the total amount, invoice number, and date
+  * Provide specific financial details
+
 INSTRUCTIONS FOR YOUR RESPONSE:
 - Answer the user's question based on the provided context information.
 - Be CONCISE and DIRECT - provide only the essential information needed to answer the question.
@@ -220,7 +232,9 @@ CRITICAL RULES:
 - Never make up information that isn't in the context.
 - Be as brief as possible while still being helpful.
 - For financial questions, provide the specific amount and date if available.
+- For invoice/receipt questions, extract: company name, amount, invoice number, and date.
 - For location-specific spending questions, identify relevant transactions by merchant codes, airline codes, or foreign exchange fees.
+- When finding invoice data in emails, present it clearly: "The [Company] invoice was $X.XX on [Date]"
 - For factual questions, provide the direct answer without elaboration.
 [/INST]"""
     
@@ -487,7 +501,17 @@ ANSWER:"""
         
         financial_instructions = ""
         if is_financial_query:
-            financial_instructions = """
+            # Check for specific payment method queries
+            payment_method_query = any(method in query.lower() for method in ['zelle', 'venmo', 'paypal', 'via'])
+            
+            if payment_method_query:
+                financial_instructions = """
+- CRITICAL: For payment method queries (Zelle, Venmo, PayPal), only include amounts that match BOTH the person/merchant AND the payment method
+- If asked "how much I paid Alex Jones with Zelle", only report amounts from Alex Jones transactions that specifically mention Zelle
+- Do NOT include amounts from other payment methods to the same person
+- Be precise - if multiple payment methods were used with the same person, only report the requested method's amount"""
+            else:
+                financial_instructions = """
 - CRITICAL: For financial queries, only include amounts that EXACTLY match the merchant/person mentioned in the question
 - Do NOT include amounts from other transactions that happen to be in the same text chunk
 - If asked about payments to a specific person or merchant, only report amounts for that exact person/merchant
@@ -599,9 +623,13 @@ def generate_response(query: str, context_chunks: List[Any], first_person_mode: 
                 logger.error(f"LLM error on attempt {attempt + 1}: {str(llm_error)}")
                 if attempt < max_retries - 1:
                     # Reset the LLM and try again for certain errors
-                    if "broken pipe" in str(llm_error).lower() or "connection" in str(llm_error).lower():
+                    if ("broken pipe" in str(llm_error).lower() or 
+                        "connection" in str(llm_error).lower() or
+                        "llama_decode returned" in str(llm_error) or
+                        "RuntimeError" in str(llm_error)):
+                        logger.warning(f"Resetting LLM due to recoverable error: {str(llm_error)}")
                         reset_llm()
-                        time.sleep(1)
+                        time.sleep(2)  # Longer pause for decode errors
                         continue
                 raise  # Re-raise non-recoverable errors
 
@@ -610,7 +638,11 @@ def generate_response(query: str, context_chunks: List[Any], first_person_mode: 
             response_text = raw_response
         elif isinstance(raw_response, dict):
             # llama_cpp returns a dict with 'choices'
-            response_text = raw_response.get("choices", [{}])[0].get("text", "")
+            choices = raw_response.get("choices", [])
+            if choices and len(choices) > 0:
+                response_text = choices[0].get("text", "")
+            else:
+                response_text = ""
         else:
             # Fallback to string representation
             response_text = str(raw_response)
@@ -633,7 +665,6 @@ def generate_response(query: str, context_chunks: List[Any], first_person_mode: 
                 query_lower = query.lower()
                 
                 # Extract specific entity names from query (remove common/generic words)
-                import re
                 
                 # Clean the query and extract meaningful terms
                 cleaned_query = re.sub(r'[^\w\s]', ' ', query_lower)  # Remove punctuation
@@ -756,6 +787,8 @@ async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> t
         # Check if caching is enabled
         service = get_ai_config_service()
         ai_config = service.get_ai_config()
+        cache_key = None  # Initialize cache_key to None
+        
         if getattr(ai_config, "enable_response_caching", False):
             # Create cache key from query and context chunks
             context_text = " ".join([chunk.get('content', '') for chunk in context_chunks])
@@ -771,6 +804,11 @@ async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> t
             logger.warning("No context chunks provided for query")
             return "I don't have enough information to answer that question. Please upload relevant documents first or try a different question.", False
         
+        # Check if email prioritization was requested but failed
+        email_prioritization_failed = any(chunk.get('email_prioritization_failed', False) for chunk in context_chunks)
+        if email_prioritization_failed:
+            logger.info("Email prioritization was requested but no emails were found")
+        
         # Log the scores of the context chunks
         scores = [chunk.get('score', 0) for chunk in context_chunks]
         logger.info(f"Context chunk scores: {[round(score, 2) for score in scores]}")
@@ -779,7 +817,7 @@ async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> t
         context_content = []
         for i, chunk in enumerate(context_chunks):
             # Get content and metadata
-            content = chunk.get('content', '')
+            content = chunk.get('content', '') or chunk.get('text', '')  # Support both content and text fields
             metadata = chunk.get('metadata', {})
             score = chunk.get('score', 0)
             
@@ -804,8 +842,23 @@ async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> t
         
         # Apply response filtering and validation
         
+        # Apply email response filtering for email queries (highest priority)
+        if any(keyword in query.lower() for keyword in ['check email', 'check emails', 'email', 'invoice', 'receipt']):
+            logger.info(f"Applying email filter to query: '{query}' with response: '{response[:100]}...'")
+            try:
+                filtered_response = email_filter.filter_email_response(query, response, context_content)
+                if filtered_response:
+                    logger.info(f"Email filter returned: '{filtered_response[:100]}...'")
+                    response = filtered_response
+                else:
+                    logger.info("Email filter returned None, keeping original response")
+            except Exception as e:
+                logger.error(f"Error in email filter: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        
         # Apply financial response filtering for financial queries
-        if any(keyword in query.lower() for keyword in ['money', 'spend', 'spent', 'expense', 'cost', 'dollar', '$', 'payment', 'paid', 'pay', 'finance', 'subscription', 'purchase']):
+        elif any(keyword in query.lower() for keyword in ['money', 'spend', 'spent', 'expense', 'cost', 'dollar', '$', 'payment', 'paid', 'pay', 'finance', 'subscription', 'purchase']):
             logger.info(f"Applying financial filter to query: '{query}' with response: '{response[:100]}...'")
             try:
                 filtered_response = financial_filter.filter_financial_response(query, response, context_content)
@@ -838,8 +891,13 @@ async def generate_answer(query: str, context_chunks: List[Dict[Any, Any]]) -> t
             logger.warning("LLM returned empty response")
             return "I couldn't find a good answer to your question in the provided documents. Please try rephrasing your question or upload more relevant documents.", False
         
+        # Add note about email prioritization failure if applicable
+        if email_prioritization_failed:
+            response = f"I noticed you asked to 'check emails' for Apple invoice information, but no emails were found in your account. Instead, I searched your uploaded documents and found these amounts: {response}\n\nIMPORTANT: To search your actual emails (which would contain real Apple receipts), please connect your email account first. The amounts above are from your document uploads, not from Apple email receipts."
+            logger.info("Added email prioritization failure note to response")
+        
         # Cache the response if caching is enabled
-        if getattr(ai_config, "enable_response_caching", False) and 'cache_key' in locals():
+        if getattr(ai_config, "enable_response_caching", False) and cache_key is not None:
             _response_cache[cache_key] = response
             logger.info(f"Cached response for query: '{query}'")
         

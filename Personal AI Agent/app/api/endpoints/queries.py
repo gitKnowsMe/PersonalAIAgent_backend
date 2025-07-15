@@ -48,36 +48,43 @@ async def _search_emails(query: str, user_id: int, source_params: dict) -> List[
     from app.services.email.email_store import EmailStore
     from app.services.embedding_service import SentenceTransformerEmbeddingService
     
+    logger.info(f"DEBUG: _search_emails called for user {user_id} with query '{query}'")
     email_store = EmailStore()
     embedding_service = SentenceTransformerEmbeddingService()
     email_chunks = []
     
     try:
         # Generate query embedding
+        logger.info(f"DEBUG: Generating embedding for query '{query}'")
         query_embedding = await embedding_service.generate_embedding(query)
+        logger.info(f"DEBUG: Generated embedding of length {len(query_embedding)}")
         
         # Detect if this is a financial/invoice query for smart email filtering
         financial_keywords = ["invoice", "receipt", "payment", "bill", "cost", "price", "amount", "total", "$", "paid", "charge"]
         is_financial_query = any(keyword in query.lower() for keyword in financial_keywords)
+        logger.info(f"DEBUG: Is financial query: {is_financial_query}")
         
         # Determine email type filter
         email_type_filter = source_params.get('email_type_filter')
+        logger.info(f"DEBUG: Email type filter: {email_type_filter}")
         
         # For now, always search all emails since category search has issues
         # TODO: Fix category-based search later
-        email_results = await email_store.search_emails(
+        logger.info(f"DEBUG: Calling email_store.search_emails for user {user_id}")
+        email_results = email_store.search_emails(
             query_embedding=query_embedding,
             user_id=user_id,
             k=10
         )
-        logger.info(f"Found {len(email_results)} email results for query: '{query}'")
+        logger.info(f"DEBUG: Found {len(email_results)} email results for query: '{query}' for user {user_id}")
         
         # Convert email results to chunks format
-        for result in email_results:
+        for i, result in enumerate(email_results):
             metadata = result.get('metadata', {})
             subject = metadata.get('subject', 'No Subject')
             sender = metadata.get('sender', 'Unknown Sender')
             email_content = f"[EMAIL from {sender}] Subject: {subject}\nContent: {result.get('text', '')}"
+            logger.info(f"DEBUG: Email {i+1}: Subject='{subject}', Sender='{sender}', Score={result.get('score', 0.0)}")
             
             # Create chunk dictionary with proper format for LLM
             email_chunk = {
@@ -97,9 +104,11 @@ async def _search_emails(query: str, user_id: int, source_params: dict) -> List[
             email_chunks.append(email_chunk)
             
     except Exception as e:
-        logger.error(f"Error searching emails: {e}")
+        logger.error(f"DEBUG: Error searching emails for user {user_id}: {e}")
+        logger.exception("Full exception details:")
         # Continue without email results
     
+    logger.info(f"DEBUG: Returning {len(email_chunks)} email chunks for user {user_id}")
     return email_chunks
 
 
@@ -212,13 +221,36 @@ async def ask_question(
         # Check for email prioritization keywords
         query_lower = query.question.lower().strip()
         email_prioritization_keywords = [
+            # Current keywords
             "check emails", "search emails", "find emails", "look in emails", 
-            "email search", "inbox search", "check my emails", "search my inbox"
+            "email search", "inbox search", "check my emails", "search my inbox",
+            "check email", "find email", "look in email",
+            
+            # Enhanced natural variations
+            "in my emails", "from emails", "email about", "emails for",
+            "check inbox", "search inbox", "look in inbox",
+            "my gmail", "gmail search", "email messages",
+            
+            # Question patterns
+            "did I get an email", "any emails about", "email from",
+            "emails containing", "emails with"
         ]
-        prioritize_emails = any(query_lower.startswith(keyword) for keyword in email_prioritization_keywords)
+        prioritize_emails = any(keyword in query_lower for keyword in email_prioritization_keywords)
+        logger.info(f"DEBUG: Query='{query_lower}', Keywords={email_prioritization_keywords}")
+        logger.info(f"🔍 DEBUG: Prioritize emails={prioritize_emails}")
         if prioritize_emails:
-            matching_keyword = next(keyword for keyword in email_prioritization_keywords if query_lower.startswith(keyword))
-            logger.info(f"Query starts with '{matching_keyword}' - prioritizing email search")
+            matching_keyword = next(keyword for keyword in email_prioritization_keywords if keyword in query_lower)
+            logger.info(f"🔍 DEBUG: Query contains '{matching_keyword}' - PRIORITIZING EMAIL SEARCH for user {current_user.id}")
+            
+            # CRITICAL FIX: Override source parameters for EMAIL-ONLY search when email prioritization is detected
+            logger.info(f"🔍 DEBUG: EMAIL PRIORITIZATION DETECTED - forcing email-only search")
+            logger.info(f"🔍 DEBUG: Before override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            source_params['search_emails'] = True
+            source_params['search_documents'] = False  # ⭐ KEY ADDITION
+            logger.info(f"🔍 DEBUG: After override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            logger.info(f"🔍 DEBUG: CRITICAL CHECK - source_params after override: {source_params}")
+        else:
+            logger.info(f"🔍 DEBUG: No email prioritization keywords found in query for user {current_user.id}")
         
         # Search for similar chunks using vector search based on source selection
         try:
@@ -226,11 +258,16 @@ async def ask_question(
             email_chunks = []
             
             # Determine search order based on email prioritization
+            logger.info(f"DEBUG: Source params - search_documents: {source_params.get('search_documents')}, search_emails: {source_params.get('search_emails')}")
             if prioritize_emails:
+                logger.info(f"DEBUG: EMAIL PRIORITIZED - searching emails first for user {current_user.id}")
                 # Search emails first when prioritized
                 if source_params['search_emails']:
+                    logger.info(f"DEBUG: Calling _search_emails for user {current_user.id}")
                     email_chunks = await _search_emails(query.question, current_user.id, source_params)
-                    logger.info(f"Found {len(email_chunks)} email chunks (prioritized)")
+                    logger.info(f"DEBUG: Found {len(email_chunks)} email chunks (prioritized) for user {current_user.id}")
+                else:
+                    logger.info(f"DEBUG: search_emails=False, skipping email search for user {current_user.id}")
                 
                 # Search documents second when emails are prioritized
                 if source_params['search_documents']:
@@ -239,8 +276,9 @@ async def ask_question(
                         user_id=current_user.id,
                         document_id=source_params['document_id']
                     )
-                    logger.info(f"Found {len(document_chunks)} document chunks (after email priority)")
+                    logger.info(f"DEBUG: Found {len(document_chunks)} document chunks (after email priority)")
             else:
+                logger.info(f"DEBUG: Normal search order - documents first, then emails for user {current_user.id}")
                 # Normal order: documents first, then emails
                 if source_params['search_documents']:
                     document_chunks = await search_similar_chunks(
@@ -256,9 +294,60 @@ async def ask_question(
             
             # Combine chunks with prioritization
             if prioritize_emails:
-                # When prioritizing emails, put email chunks first and limit documents
-                chunks = email_chunks + document_chunks[:5]  # Limit documents when emails are prioritized
-                logger.info(f"Email-prioritized search: {len(email_chunks)} email chunks + {len(document_chunks[:5])} document chunks = {len(chunks)} total")
+                # When prioritizing emails, check if we actually have email results
+                if len(email_chunks) == 0:
+                    # No emails found despite email prioritization - provide helpful message
+                    logger.warning(f"Email prioritization detected but no emails found for user {current_user.id}")
+                    # Return helpful message suggesting to check PDFs
+                    answer = "Sorry I couldn't find this information in the email, do you want me to check the pdf's?"
+                    
+                    try:
+                        # Log the query with the fallback message
+                        query_log = Query(
+                            question=query.question,
+                            answer=answer,
+                            document_id=source_params.get('document_id'),
+                            user_id=current_user.id
+                        )
+                        
+                        db.add(query_log)
+                        db.commit()
+                        db.refresh(query_log)
+                        
+                        response_time = (time.time() - start_time) * 1000
+                        
+                        return {
+                            "id": query_log.id,
+                            "question": query_log.question,
+                            "answer": answer,
+                            "document_id": query_log.document_id,
+                            "created_at": query_log.created_at,
+                            "from_cache": False,
+                            "response_time_ms": round(response_time, 2)
+                        }
+                    except Exception as e:
+                        logger.error(f"Error in email fallback logging: {e}")
+                        # Return fallback response even if logging fails
+                        response_time = (time.time() - start_time) * 1000
+                        return {
+                            "id": None,
+                            "question": query.question,
+                            "answer": answer,
+                            "document_id": None,
+                            "created_at": None,
+                            "from_cache": False,
+                            "response_time_ms": round(response_time, 2)
+                        }
+                else:
+                    # SUCCESS: We have emails when prioritizing emails - put them first!
+                    logger.info(f"EMAIL PRIORITIZATION SUCCESS: Found {len(email_chunks)} email chunks for user {current_user.id}")
+                    # When prioritizing emails, put email chunks first and significantly limit documents
+                    # Only include document chunks if we have very few email results
+                    if len(email_chunks) >= 3:
+                        chunks = email_chunks + document_chunks[:2]  # Minimal documents when we have good email results
+                    else:
+                        chunks = email_chunks + document_chunks[:5]  # More documents if email results are sparse
+                    logger.info(f"Email-prioritized search SUCCESS: {len(email_chunks)} email chunks + {len(document_chunks[:2 if len(email_chunks) >= 3 else 5])} document chunks = {len(chunks)} total")
             else:
                 # Normal combination
                 chunks = document_chunks + email_chunks
@@ -346,7 +435,21 @@ async def ask_question(
                     # Document source
                     else:
                         src_id = meta.get('document_id') or meta.get('doc_id') or ns
-                        label = meta.get('title') or meta.get('filename') or ns or f"Document {src_id}"
+                        title = meta.get('title', '')
+                        filename = meta.get('filename', '')
+                        
+                        # Improve source attribution to prevent hallucination
+                        if title and title.strip():
+                            label = title.strip()
+                        elif filename:
+                            # Clean up filename for better display
+                            clean_filename = filename.replace('user_7_', '').replace('.pdf', '')
+                            if len(clean_filename) > 30:
+                                clean_filename = clean_filename[:30] + '...'
+                            label = f"Document: {clean_filename}"
+                        else:
+                            label = f"Document {src_id}"
+                            
                         key = f"document:{src_id}"
                         if key not in seen_sources:
                             sources.append({

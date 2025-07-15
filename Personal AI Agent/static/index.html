@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal AI Agent</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         #test-message {
@@ -178,6 +179,120 @@
                 </div>
             </div>
 
+            <!-- Gmail Email Management Section -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📧 Gmail Integration</div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <small>
+                                    <strong>Email Processing:</strong> Connect your Gmail to search and query your emails:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>Business:</strong> Work emails, meetings, projects</li>
+                                        <li><strong>Personal:</strong> Family, friends, personal communications</li>
+                                        <li><strong>Promotional:</strong> Newsletters, marketing emails</li>
+                                        <li><strong>Transactional:</strong> Receipts, confirmations, notifications</li>
+                                    </ul>
+                                </small>
+                            </div>
+                            
+                            <div id="gmail-status">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>Gmail Status:</span>
+                                    <span id="gmail-connection-status" class="badge bg-warning">Not Connected</span>
+                                </div>
+                                
+                                <div id="gmail-not-connected" class="text-center">
+                                    <p class="text-muted">Connect your Gmail account to search and analyze your emails</p>
+                                    <button id="connect-gmail-btn" class="btn btn-success">
+                                        <i class="fas fa-envelope"></i> Connect Gmail
+                                    </button>
+                                </div>
+                                
+                                <div id="gmail-connected" style="display: none;">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Account: <span id="gmail-account-email"></span></span>
+                                            <button id="disconnect-gmail-btn" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Total Emails: <span id="gmail-total-emails">0</span></span>
+                                            <span>Unread: <span id="gmail-unread-emails">0</span></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted">Last sync: <span id="gmail-last-sync">Never</span></small>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button id="sync-emails-btn" class="btn btn-primary">
+                                            <i class="fas fa-sync"></i> Sync Emails
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📨 Email Search</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="email-search-query" class="form-label">Search Emails</label>
+                                <input type="text" class="form-control" id="email-search-query" placeholder="Search emails by content, sender, or subject">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-type-filter" class="form-label">Email Type</label>
+                                    <select class="form-control" id="email-type-filter">
+                                        <option value="">All Types</option>
+                                        <option value="business">Business</option>
+                                        <option value="personal">Personal</option>
+                                        <option value="promotional">Promotional</option>
+                                        <option value="transactional">Transactional</option>
+                                        <option value="support">Support</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-sender-filter" class="form-label">Sender</label>
+                                    <input type="email" class="form-control" id="email-sender-filter" placeholder="Filter by sender email">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-date-from" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="email-date-from">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-date-to" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="email-date-to">
+                                </div>
+                            </div>
+                            
+                            <button id="search-emails-btn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search Emails
+                            </button>
+                            
+                            <div id="email-search-results" class="mt-3" style="display: none;">
+                                <h6>Search Results:</h6>
+                                <div id="email-results-list" class="list-group">
+                                    <!-- Email search results will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -185,9 +300,9 @@
                         <div class="card-body">
                             <form id="query-form">
                                 <div class="mb-3">
-                                    <label for="document-select" class="form-label">Select Document (optional)</label>
-                                    <select class="form-control" id="document-select">
-                                        <option value="">All Documents</option>
+                                    <label for="source-select" class="form-label">Source</label>
+                                    <select class="form-control" id="source-select">
+                                        <option value="">All Sources</option>
                                         <!-- Options will be loaded here -->
                                     </select>
                                 </div>
@@ -234,7 +349,7 @@
             }, 3000);
         });
     </script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=3&t=1720574400"></script>
     <script>
         console.log("Inline script executed");
         document.addEventListener('DOMContentLoaded', function() {

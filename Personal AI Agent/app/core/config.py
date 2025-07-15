@@ -14,6 +14,8 @@ logger = logging.getLogger("personal_ai_agent")
 # Load environment variables from .env file (allow later duplicates to override earlier ones)
 load_dotenv(override=True)
 
+# Gmail OAuth credentials will be loaded from environment variables (.env file)
+
 # Load Metal settings
 metal_enabled = os.getenv("USE_METAL", str(USE_METAL_DEFAULT)).lower() == "true"
 metal_layers = int(os.getenv("METAL_N_GPU_LAYERS", str(METAL_N_GPU_LAYERS_DEFAULT)))
@@ -100,5 +102,69 @@ class Settings:
     LOG_FILE: str = str(BASE_DIR / LOGS_DIR / "app.log")
     LOG_MAX_BYTES: int = LOG_MAX_BYTES
     LOG_BACKUP_COUNT: int = LOG_BACKUP_COUNT
+    
+    # Gmail Integration settings (loaded from environment variables)
+    GMAIL_CLIENT_ID: str = os.getenv("GMAIL_CLIENT_ID")
+    GMAIL_CLIENT_SECRET: str = os.getenv("GMAIL_CLIENT_SECRET")
+    GMAIL_REDIRECT_URI: str = os.getenv("GMAIL_REDIRECT_URI", "http://localhost:8000/api/gmail/callback")
+    
+    GMAIL_MAX_EMAILS_PER_SYNC: int = int(os.getenv("GMAIL_MAX_EMAILS_PER_SYNC", str(GMAIL_MAX_EMAILS_PER_SYNC)))
+    GMAIL_DEFAULT_SYNC_LIMIT: int = int(os.getenv("GMAIL_DEFAULT_SYNC_LIMIT", str(GMAIL_DEFAULT_SYNC_LIMIT)))
+    
+    # Email processing settings
+    EMAIL_STORAGE_DIR: str = str(BASE_DIR / "static" / "emails")
+    EMAIL_VECTOR_DB_PATH: str = str(BASE_DIR / DATA_DIR / "email_vectors")
+    
+    def validate_gmail_config(self) -> None:
+        """Validate Gmail OAuth configuration with detailed error messages"""
+        errors = []
+        warnings = []
+        
+        # Check required variables
+        if not self.GMAIL_CLIENT_ID:
+            errors.append("GMAIL_CLIENT_ID is required")
+        elif not self.GMAIL_CLIENT_ID.endswith('.apps.googleusercontent.com'):
+            warnings.append("GMAIL_CLIENT_ID should end with '.apps.googleusercontent.com'")
+        elif self.GMAIL_CLIENT_ID == 'your_gmail_client_id_from_google_cloud_console':
+            errors.append("GMAIL_CLIENT_ID is still set to placeholder value")
+        
+        if not self.GMAIL_CLIENT_SECRET:
+            errors.append("GMAIL_CLIENT_SECRET is required")
+        elif not self.GMAIL_CLIENT_SECRET.startswith('GOCSPX-'):
+            warnings.append("GMAIL_CLIENT_SECRET should start with 'GOCSPX-'")
+        elif self.GMAIL_CLIENT_SECRET == 'your_gmail_client_secret_from_google_cloud_console':
+            errors.append("GMAIL_CLIENT_SECRET is still set to placeholder value")
+        
+        # Validate redirect URI
+        if not self.GMAIL_REDIRECT_URI:
+            errors.append("GMAIL_REDIRECT_URI is required")
+        elif not self.GMAIL_REDIRECT_URI.startswith("http"):
+            errors.append(f"GMAIL_REDIRECT_URI must start with 'http': {self.GMAIL_REDIRECT_URI}")
+        elif not self.GMAIL_REDIRECT_URI.endswith('/api/gmail/callback'):
+            warnings.append(f"GMAIL_REDIRECT_URI should end with '/api/gmail/callback': {self.GMAIL_REDIRECT_URI}")
+        
+        # Report errors and warnings
+        if warnings:
+            for warning in warnings:
+                logger.warning(f"Gmail OAuth configuration warning: {warning}")
+        
+        if errors:
+            logger.error("Gmail OAuth configuration errors found:")
+            for error in errors:
+                logger.error(f"  - {error}")
+            logger.error("Please check your .env file or environment variables")
+            logger.error("See .env.example for proper configuration format")
+            raise ValueError(f"Gmail OAuth configuration errors: {'; '.join(errors)}")
+        
+        logger.info("Gmail OAuth configuration validated successfully")
 
-settings = Settings() 
+settings = Settings()
+
+# Validate Gmail configuration at startup (only if not in testing mode)
+import sys
+if "pytest" not in sys.modules and "unittest" not in sys.modules:
+    try:
+        settings.validate_gmail_config()
+    except ValueError as e:
+        logger.warning(f"Gmail configuration validation failed: {e}")
+        logger.warning("Gmail features will be disabled until configuration is fixed") 

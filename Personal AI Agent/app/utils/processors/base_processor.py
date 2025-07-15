@@ -11,7 +11,7 @@ from langchain_core.documents import Document as LangchainDocument
 from datetime import datetime
 
 from app.services.vector_store_service import get_vector_store_service
-from app.services.embedding_service import get_embedding_model
+from app.services.embedding_service import get_embedding_model, get_embedding_service
 from app.utils.document_classifier import detect_document_type, get_document_type_metadata
 from app.db.models import Document, User
 from app.db.database import get_db
@@ -535,9 +535,11 @@ class BaseDocumentProcessor(ABC):
             
             # Get vector store service and add documents
             vector_store_service = get_vector_store_service()
+            embedding_service = get_embedding_service()
             chunks_added = await vector_store_service.add_documents(
                 chunks, 
-                category_namespace
+                category_namespace,
+                embedding_service
             )
             
             logger.info(f"Successfully processed document {document.file_path}: {chunks_added} chunks added, type: {document_type}")

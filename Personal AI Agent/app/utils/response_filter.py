@@ -280,6 +280,15 @@ class FinancialResponseFilter:
         # Sort by length descending to prefer longer, more specific matches
         search_terms.sort(key=len, reverse=True)
         
+        # Check for specific payment method queries (Zelle, Venmo, etc.)
+        payment_method = None
+        if 'zelle' in query_lower:
+            payment_method = 'zelle'
+        elif 'venmo' in query_lower:
+            payment_method = 'venmo'
+        elif 'paypal' in query_lower:
+            payment_method = 'paypal'
+        
         if search_terms and ('how much' in query_lower or 'amount' in query_lower or 'paid' in query_lower or 'cost' in query_lower or 'sent' in query_lower):
             matched_amounts = []
             matched_service = None
@@ -294,11 +303,20 @@ class FinancialResponseFilter:
                     
                     # Direct match
                     if term_lower in text_lower:
-                        # Extract amounts from this transaction
+                        # If payment method is specified, only match chunks that contain BOTH the person/entity AND the payment method
+                        if payment_method:
+                            if payment_method not in text_lower:
+                                continue  # Skip this chunk if it doesn't contain the specified payment method
+                        
+                        # Extract amounts from this transaction line/chunk
                         amounts = re.findall(r'\$\d+(?:,\d{3})*(?:\.\d{2})?', text)
                         if not amounts:
                             amounts = re.findall(r'\b\d+(?:,\d{3})*\.\d{2}\b', text)
-                        for amt in amounts:
+                        
+                        # For better accuracy, only take the first amount from this specific chunk
+                        # This prevents multiple unrelated amounts from being combined
+                        if amounts:
+                            amt = amounts[0]  # Take only the first amount from this chunk
                             if not amt.startswith('$'):
                                 amt = f'${amt}'
                             matched_amounts.append(amt)
@@ -316,9 +334,23 @@ class FinancialResponseFilter:
                 if 'subscription' in query_lower and not matched_service:
                     service_name = 'subscription services'
                 
+                # Add payment method context if specified
+                if payment_method:
+                    service_name += f' via {payment_method.title()}'
+                
+                # For queries without payment method specification, if multiple amounts found,
+                # return the most recent transaction (first in the list since chunks are sorted by relevance)
+                if not payment_method and len(unique_amounts) > 1:
+                    # For general queries, return the most recent/relevant transaction
+                    if 'how much' in query_lower:
+                        # Return the first (most recent/relevant) transaction
+                        return f"You paid {unique_amounts[0]} to {service_name}."
+                    else:
+                        return f"You paid these amounts to {service_name}: {', '.join(unique_amounts)}."
+                
                 if len(unique_amounts) == 1:
-                    return f"You paid {unique_amounts[0]} for {service_name}."
-                return f"You paid these amounts for {service_name}: {', '.join(unique_amounts)}."
+                    return f"You paid {unique_amounts[0]} to {service_name}."
+                return f"You paid these amounts to {service_name}: {', '.join(unique_amounts)}."
 
 
         # Build response based on what's actually in the context
@@ -358,6 +390,126 @@ class FinancialResponseFilter:
             'dates': dates,
             'payees': payees
         }
+
+
+class EmailResponseFilter:
+    """Filter email responses to extract only email content"""
+    
+    def filter_email_response(self, query: str, response: str, context_chunks: List[str]) -> Optional[str]:
+        """
+        Filter responses for email queries to only return email content
+        
+        Args:
+            query: The user's query
+            response: The LLM-generated response
+            context_chunks: The context used for generation
+            
+        Returns:
+            Filtered response with only email content, or None if no email content found
+        """
+        query_lower = query.lower()
+        
+        # Check if this is an email query
+        if not any(keyword in query_lower for keyword in ['check email', 'check emails', 'email', 'invoice', 'receipt']):
+            return None
+            
+        # Extract email content from context chunks
+        email_chunks = []
+        for chunk in context_chunks:
+            text = chunk if isinstance(chunk, str) else chunk.get('content', '')
+            if '[EMAIL' in text:
+                email_chunks.append(text)
+        
+        if not email_chunks:
+            return None
+            
+        # Look for specific company/service mentioned in query
+        query_entities = self._extract_query_entities(query)
+        
+        if query_entities:
+            # Find email chunks that mention the specific entities
+            relevant_emails = []
+            for chunk in email_chunks:
+                for entity in query_entities:
+                    if entity.lower() in chunk.lower():
+                        relevant_emails.append(chunk)
+                        break
+            
+            if relevant_emails:
+                # Extract amounts from relevant emails
+                amounts = self._extract_amounts_from_emails(relevant_emails)
+                if amounts:
+                    entity_name = query_entities[0].title()
+                    if len(amounts) == 1:
+                        return f"The {entity_name} invoice was {amounts[0]}."
+                    else:
+                        return f"The {entity_name} invoices were: {', '.join(amounts)}."
+        
+        # General email query - extract all amounts from email content
+        all_amounts = self._extract_amounts_from_emails(email_chunks)
+        if all_amounts:
+            if len(all_amounts) == 1:
+                return f"The invoice amount is {all_amounts[0]}."
+            else:
+                return f"The invoice amounts are: {', '.join(all_amounts)}."
+        
+        return None
+    
+    def _extract_query_entities(self, query: str) -> List[str]:
+        """Extract company/service names from query"""
+        query_lower = query.lower()
+        
+        # Common company names and their variations
+        companies = {
+            'apple': ['apple', 'icloud', 'app store', 'itunes'],
+            'google': ['google', 'gmail', 'google play', 'youtube'],
+            'amazon': ['amazon', 'aws', 'prime'],
+            'microsoft': ['microsoft', 'office', 'outlook', 'azure'],
+            'netflix': ['netflix'],
+            'spotify': ['spotify'],
+            'dropbox': ['dropbox'],
+            'adobe': ['adobe', 'creative cloud']
+        }
+        
+        found_entities = []
+        for company, variants in companies.items():
+            if any(variant in query_lower for variant in variants):
+                found_entities.append(company)
+        
+        # Also look for capitalized words that might be company names
+        words = query.split()
+        for word in words:
+            if word.istitle() and len(word) > 3:
+                found_entities.append(word)
+        
+        return list(set(found_entities))
+    
+    def _extract_amounts_from_emails(self, email_chunks: List[str]) -> List[str]:
+        """Extract monetary amounts from email content"""
+        amounts = []
+        for chunk in email_chunks:
+            # Look for various amount formats
+            import re
+            patterns = [
+                r'\$\d+(?:,\d{3})*(?:\.\d{2})?',  # $123.45
+                r'USD\s*\d+(?:,\d{3})*(?:\.\d{2})?',  # USD 123.45
+                r'Total:\s*\$\d+(?:,\d{3})*(?:\.\d{2})?',  # Total: $123.45
+                r'Amount:\s*\$\d+(?:,\d{3})*(?:\.\d{2})?',  # Amount: $123.45
+                r'Amount Due:\s*\$\d+(?:,\d{3})*(?:\.\d{2})?',  # Amount Due: $123.45
+                r'\$\d+(?:\.\d{2})?',  # Simple $123.45
+            ]
+            
+            for pattern in patterns:
+                found = re.findall(pattern, chunk, re.IGNORECASE)
+                for amount in found:
+                    # Clean up the amount
+                    clean_amount = re.sub(r'[^\d\.\$]', '', amount)
+                    if clean_amount and not clean_amount.startswith('$'):
+                        clean_amount = '$' + clean_amount
+                    if clean_amount and clean_amount not in amounts:
+                        amounts.append(clean_amount)
+        
+        return amounts
 
 
 class VacationResponseFilter:
@@ -522,4 +674,5 @@ class VacationResponseFilter:
 # Global instances
 vacation_filter = VacationResponseFilter()
 financial_filter = FinancialResponseFilter()
+email_filter = EmailResponseFilter()
 response_validator = ResponseValidator()

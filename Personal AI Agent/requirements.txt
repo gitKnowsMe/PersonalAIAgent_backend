@@ -19,3 +19,9 @@ python-dotenv==1.1.0
 openpyxl==3.1.5
 pypdf==5.6.1
 python-magic==0.4.27
+google-auth==2.36.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.155.0
+cryptography==44.0.0
+html2text==2024.2.26

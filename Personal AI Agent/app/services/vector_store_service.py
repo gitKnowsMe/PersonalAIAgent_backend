@@ -8,6 +8,7 @@ import logging
 import re
 from typing import List, Dict, Any, Optional, Tuple
 from abc import ABC, abstractmethod
+from datetime import datetime
 import faiss
 import numpy as np
 from langchain_core.documents import Document
@@ -728,3 +729,191 @@ def check_query_type(query: str) -> tuple[bool, bool, bool, bool, list]:
     years = re.findall(r'\b(19|20)\d{2}\b', query)
     
     return is_vacation_query, is_skills_query, is_expense_query, is_prompt_engineering_query, years
+
+
+class VectorStoreManager:
+    """Compatibility wrapper class for email processor"""
+    
+    def __init__(self):
+        self.service = get_vector_store_service()
+        self.embedding_service = None
+    
+    def _get_embedding_service(self):
+        """Get embedding service instance"""
+        if self.embedding_service is None:
+            from app.services.embedding_service import get_embedding_service
+            self.embedding_service = get_embedding_service()
+        return self.embedding_service
+    
+    def store_email_vectors(
+        self,
+        user_id: int,
+        email_id: int,
+        email_type: str,
+        chunks: List[Dict[str, Any]],
+        namespace: str
+    ) -> bool:
+        """
+        Store email vectors in the vector database
+        
+        Args:
+            user_id: User ID
+            email_id: Email ID
+            email_type: Email type (business, personal, etc.)
+            chunks: List of email chunks with content and metadata
+            namespace: Vector namespace for the email
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            from langchain_core.documents import Document
+            
+            # Convert chunks to Document objects
+            documents = []
+            for chunk in chunks:
+                content = chunk.get("content", "")
+                metadata = chunk.get("metadata", {})
+                
+                # Add email-specific metadata
+                metadata.update({
+                    "email_id": email_id,
+                    "email_type": email_type,
+                    "user_id": user_id,
+                    "chunk_index": chunk.get("chunk_index", 0),
+                    "content_type": "email"
+                })
+                
+                doc = Document(page_content=content, metadata=metadata)
+                documents.append(doc)
+            
+            if not documents:
+                logger.warning(f"No documents to store for email {email_id}")
+                return False
+            
+            # Store in vector database using async method
+            import asyncio
+            loop = asyncio.get_event_loop()
+            
+            # Use email type as document type for proper categorization
+            chunks_added = loop.run_until_complete(
+                self.service.add_documents(
+                    documents=documents,
+                    namespace=namespace,
+                    embedding_service=self._get_embedding_service(),
+                    document_type=f"email_{email_type}"
+                )
+            )
+            
+            logger.info(f"Stored {chunks_added} email chunks for email {email_id}")
+            return chunks_added > 0
+            
+        except Exception as e:
+            logger.error(f"Error storing email vectors for email {email_id}: {e}")
+            return False
+    
+    def search_emails(
+        self,
+        user_id: int,
+        query: str,
+        email_type: Optional[str] = None,
+        sender_email: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Search emails using vector similarity
+        
+        Args:
+            user_id: User ID to filter by
+            query: Search query
+            email_type: Optional email type filter
+            sender_email: Optional sender email filter
+            date_from: Optional start date filter
+            date_to: Optional end date filter
+            limit: Maximum number of results
+            
+        Returns:
+            List of search results with email_id and score
+        """
+        try:
+            # Build metadata filter
+            metadata_filter = {"user_id": user_id, "content_type": "email"}
+            
+            if email_type:
+                metadata_filter["email_type"] = email_type
+            
+            if sender_email:
+                metadata_filter["sender"] = sender_email
+            
+            # Search using the vector store service
+            import asyncio
+            loop = asyncio.get_event_loop()
+            
+            results = loop.run_until_complete(
+                self.service.search_similar_chunks(
+                    query=query,
+                    embedding_service=self._get_embedding_service(),
+                    user_id=user_id,
+                    top_k=limit * 2,  # Get more results to filter
+                    metadata_filter=metadata_filter
+                )
+            )
+            
+            # Process results and extract email information
+            email_results = []
+            seen_emails = set()
+            
+            for result in results:
+                metadata = result.get("metadata", {})
+                email_id = metadata.get("email_id")
+                
+                if email_id and email_id not in seen_emails:
+                    # Apply additional filters
+                    if date_from or date_to:
+                        sent_at_str = metadata.get("sent_at")
+                        if sent_at_str:
+                            try:
+                                from datetime import datetime
+                                sent_at = datetime.fromisoformat(sent_at_str.replace('Z', '+00:00'))
+                                
+                                if date_from and sent_at < date_from:
+                                    continue
+                                if date_to and sent_at > date_to:
+                                    continue
+                            except Exception as e:
+                                logger.warning(f"Error parsing date {sent_at_str}: {e}")
+                                continue
+                    
+                    email_results.append({
+                        "email_id": email_id,
+                        "score": result.get("score", 0.0),
+                        "content": result.get("content", ""),
+                        "metadata": metadata
+                    })
+                    seen_emails.add(email_id)
+                    
+                    if len(email_results) >= limit:
+                        break
+            
+            logger.info(f"Found {len(email_results)} email results for query: {query}")
+            return email_results
+            
+        except Exception as e:
+            logger.error(f"Error searching emails for user {user_id}: {e}")
+            return []
+
+
+# Global instance for backward compatibility
+_default_vector_store_manager: Optional[VectorStoreManager] = None
+
+
+def get_vector_store_manager() -> VectorStoreManager:
+    """Get the default vector store manager instance"""
+    global _default_vector_store_manager
+    
+    if _default_vector_store_manager is None:
+        _default_vector_store_manager = VectorStoreManager()
+    
+    return _default_vector_store_manager

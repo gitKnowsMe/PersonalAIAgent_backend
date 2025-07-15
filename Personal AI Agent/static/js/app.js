@@ -2,9 +2,10 @@
 let token = localStorage.getItem('token');
 const API_URL = window.location.origin + '/api';
 
-// Debug message
-console.log("App.js loaded successfully!");
+// Debug message - VERSION CHECK
+console.log("🚀 App.js loaded successfully! [VERSION 3.0 - CACHE BUSTED]");
 console.log("Using API URL:", API_URL);
+console.log("🔧 This is the FIXED version with proper OAuth redirect");
 
 // DOM elements
 let loginSection, registerSection, appSection;
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("User is logged in with token:", token);
         showAppSection();
         loadDocuments();
+        loadSources();
         loadQueries();
     } else {
         console.log("No token found, showing login section");
@@ -170,6 +172,7 @@ async function handleLogin(e) {
         
         showAppSection();
         loadDocuments();
+        loadSources();
         loadQueries();
     } catch (error) {
         console.error("Login error:", error);
@@ -236,10 +239,6 @@ async function loadDocuments() {
         const documentsList = document.getElementById('documents-list');
         documentsList.innerHTML = '';
         
-        const documentSelect = document.getElementById('document-select');
-        // Keep the "All Documents" option
-        documentSelect.innerHTML = '<option value="">All Documents</option>';
-        
         if (documents.length === 0) {
             documentsList.innerHTML = '<p class="text-muted">No documents uploaded yet.</p>';
         } else {
@@ -268,12 +267,6 @@ async function loadDocuments() {
                     </div>
                 `;
                 documentsList.appendChild(item);
-                
-                // Add to document select dropdown
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = doc.title;
-                documentSelect.appendChild(option);
             });
             
             // Add event listeners to delete buttons
@@ -291,6 +284,80 @@ async function loadDocuments() {
         }
     } catch (error) {
         console.error('Error loading documents:', error);
+    }
+}
+
+// Source functions
+async function loadSources() {
+    try {
+        const response = await fetch(`${API_URL}/sources`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load sources');
+        }
+        
+        const sources = await response.json();
+        
+        const sourceSelect = document.getElementById('source-select');
+        // Clear and set default option
+        sourceSelect.innerHTML = '<option value="">All Sources</option>';
+        
+        // Group sources by category
+        const groupedSources = {
+            all: [],
+            documents: [],
+            emails: []
+        };
+        
+        sources.forEach(source => {
+            groupedSources[source.source_category].push(source);
+        });
+        
+        // Add All Sources (if not already there)
+        if (groupedSources.all.length > 0) {
+            // Skip - already added as default
+        }
+        
+        // Add Documents section
+        if (groupedSources.documents.length > 0) {
+            const documentsGroup = document.createElement('optgroup');
+            documentsGroup.label = '📄 Documents';
+            
+            groupedSources.documents.forEach(source => {
+                const option = document.createElement('option');
+                option.value = `${source.source_type}:${source.source_id}`;
+                option.textContent = source.display_name;
+                option.title = source.description;
+                documentsGroup.appendChild(option);
+            });
+            
+            sourceSelect.appendChild(documentsGroup);
+        }
+        
+        // Add Emails section
+        if (groupedSources.emails.length > 0) {
+            const emailsGroup = document.createElement('optgroup');
+            emailsGroup.label = '📧 Emails';
+            
+            groupedSources.emails.forEach(source => {
+                const option = document.createElement('option');
+                option.value = `${source.source_type}:${source.source_id}`;
+                option.textContent = source.display_name;
+                option.title = source.description;
+                emailsGroup.appendChild(option);
+            });
+            
+            sourceSelect.appendChild(emailsGroup);
+        }
+        
+        console.log(`Loaded ${sources.length} sources: ${groupedSources.documents.length} documents, ${groupedSources.emails.length} email types`);
+        
+    } catch (error) {
+        console.error('Error loading sources:', error);
     }
 }
 
@@ -328,8 +395,9 @@ async function handleUpload(e) {
         // Reset form
         document.getElementById('upload-form').reset();
         
-        // Reload documents
+        // Reload documents and sources
         loadDocuments();
+        loadSources();
         
         alert('Document uploaded successfully!');
     } catch (error) {
@@ -350,8 +418,9 @@ async function deleteDocument(docId) {
             throw new Error('Delete failed');
         }
         
-        // Reload documents
+        // Reload documents and sources
         loadDocuments();
+        loadSources();
         
         // Reload queries as some might reference this document
         loadQueries();
@@ -369,7 +438,17 @@ async function handleQuery(e) {
     console.log('🚀 QUERY STARTED at:', new Date().toISOString());
     
     const question = document.getElementById('question').value;
-    const documentId = document.getElementById('document-select').value;
+    const sourceSelection = document.getElementById('source-select').value;
+    
+    // Parse source selection
+    let sourceType = 'all';
+    let sourceId = null;
+    
+    if (sourceSelection) {
+        const parts = sourceSelection.split(':');
+        sourceType = parts[0];
+        sourceId = parts[1];
+    }
     
     // Show loading indicator
     const answerContainer = document.getElementById('answer-container');
@@ -386,16 +465,21 @@ async function handleQuery(e) {
         const preApiTime = performance.now();
         console.log('🌐 STARTING API CALL at:', (preApiTime - startTime).toFixed(2), 'ms');
         
+        const requestBody = {
+            question,
+            source_type: sourceType,
+            source_id: sourceId
+        };
+        
+        console.log('Request body:', requestBody);
+        
         const response = await fetch(`${API_URL}/queries`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                question,
-                document_id: documentId || null
-            })
+            body: JSON.stringify(requestBody)
         });
         
         // Timing checkpoint: API response received
@@ -415,6 +499,31 @@ async function handleQuery(e) {
         
         // Display answer
         document.getElementById('answer').textContent = data.answer;
+
+        // Display sources (attribution)
+        const sourcesContainerId = 'answer-sources';
+        let sourcesContainer = document.getElementById(sourcesContainerId);
+        if (!sourcesContainer) {
+            sourcesContainer = document.createElement('div');
+            sourcesContainer.id = sourcesContainerId;
+            sourcesContainer.className = 'mt-2';
+            answerContainer.appendChild(sourcesContainer);
+        }
+        sourcesContainer.innerHTML = '';
+        if (data.sources && data.sources.length > 0) {
+            const srcTitle = document.createElement('div');
+            srcTitle.className = 'text-muted small mb-1';
+            srcTitle.textContent = 'Sources:';
+            sourcesContainer.appendChild(srcTitle);
+            data.sources.forEach(src => {
+                const icon = src.type === 'email' ? '📧' : '📄';
+                const label = src.label || (src.type === 'email' ? `Email ${src.id}` : `Document ${src.id}`);
+                const pill = document.createElement('span');
+                pill.className = 'badge rounded-pill bg-light text-dark me-2';
+                pill.textContent = `${icon} ${label}`;
+                sourcesContainer.appendChild(pill);
+            });
+        }
         
         // FINAL PERFORMANCE TIMING
         const endTime = performance.now();
@@ -515,6 +624,12 @@ function showAppSection() {
     loginSection.style.display = 'none';
     registerSection.style.display = 'none';
     appSection.style.display = 'block';
+    
+    // Initialize Gmail UI after app section is shown
+    setTimeout(() => {
+        initializeGmailUI();
+        debugGmailButton();
+    }, 100);
 }
 
 function formatFileSize(bytes) {
@@ -607,4 +722,526 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debugRefreshBtn) {
         debugRefreshBtn.addEventListener('click', updateDebugInfo);
     }
-}); 
+});
+
+// Gmail functionality
+async function initializeGmailUI() {
+    try {
+        console.log('Initializing Gmail UI...');
+        
+        // Check if user is logged in
+        if (!token) {
+            console.log('No token found, skipping Gmail initialization');
+            return;
+        }
+        
+        // Check if app section is visible
+        const appSection = document.getElementById('app-section');
+        if (!appSection || appSection.style.display === 'none') {
+            console.log('App section not visible, skipping Gmail initialization');
+            return;
+        }
+        
+        // Add event listeners for Gmail buttons
+        const connectGmailBtn = document.getElementById('connect-gmail-btn');
+        const disconnectGmailBtn = document.getElementById('disconnect-gmail-btn');
+        const syncEmailsBtn = document.getElementById('sync-emails-btn');
+        const searchEmailsBtn = document.getElementById('search-emails-btn');
+        
+        console.log('Gmail buttons found:', {
+            connectGmailBtn: connectGmailBtn ? 'found' : 'missing',
+            disconnectGmailBtn: disconnectGmailBtn ? 'found' : 'missing',
+            syncEmailsBtn: syncEmailsBtn ? 'found' : 'missing',
+            searchEmailsBtn: searchEmailsBtn ? 'found' : 'missing'
+        });
+        
+        // Use event delegation as backup
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'connect-gmail-btn') {
+                console.log('Connect Gmail clicked via event delegation');
+                e.preventDefault();
+                connectGmail();
+            }
+        });
+        
+        if (connectGmailBtn) {
+            // Remove any existing listeners first
+            connectGmailBtn.removeEventListener('click', connectGmail);
+            
+            connectGmailBtn.addEventListener('click', (e) => {
+                console.log('Connect Gmail button clicked - direct event fired!');
+                e.preventDefault();
+                connectGmail();
+            });
+            console.log('Connect Gmail button event listener added');
+        }
+        
+        if (disconnectGmailBtn) {
+            disconnectGmailBtn.addEventListener('click', disconnectGmail);
+        }
+        
+        if (syncEmailsBtn) {
+            console.log('✅ Adding sync emails event listener');
+            syncEmailsBtn.addEventListener('click', (e) => {
+                console.log('🎯 Sync emails button clicked via event listener');
+                e.preventDefault();
+                syncEmails();
+            });
+        } else {
+            console.error('❌ Sync emails button not found during initialization');
+        }
+        
+        if (searchEmailsBtn) {
+            searchEmailsBtn.addEventListener('click', searchEmails);
+        }
+        
+        // Check Gmail connection status
+        await checkGmailStatus();
+        
+    } catch (error) {
+        console.error('Error initializing Gmail UI:', error);
+    }
+}
+
+async function checkGmailStatus() {
+    try {
+        const response = await fetch(`${API_URL}/gmail/accounts`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to check Gmail status');
+        }
+        
+        const accounts = await response.json();
+        
+        if (accounts.length > 0) {
+            const account = accounts[0]; // Use first account
+            await updateGmailUI(account);
+        } else {
+            showGmailNotConnected();
+        }
+        
+    } catch (error) {
+        console.error('Error checking Gmail status:', error);
+        showGmailNotConnected();
+    }
+}
+
+async function updateGmailUI(account) {
+    try {
+        // Get account status
+        const response = await fetch(`${API_URL}/gmail/status/${account.id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to get Gmail status');
+        }
+        
+        const status = await response.json();
+        
+        // Update UI elements
+        const connectionStatus = document.getElementById('gmail-connection-status');
+        const accountEmail = document.getElementById('gmail-account-email');
+        const totalEmails = document.getElementById('gmail-total-emails');
+        const unreadEmails = document.getElementById('gmail-unread-emails');
+        const lastSync = document.getElementById('gmail-last-sync');
+        
+        const gmailNotConnected = document.getElementById('gmail-not-connected');
+        const gmailConnected = document.getElementById('gmail-connected');
+        
+        if (connectionStatus) {
+            connectionStatus.textContent = status.is_connected ? 'Connected' : 'Disconnected';
+            connectionStatus.className = status.is_connected ? 'badge bg-success' : 'badge bg-danger';
+        }
+        
+        if (accountEmail) {
+            accountEmail.textContent = status.email_address;
+        }
+        
+        if (totalEmails) {
+            totalEmails.textContent = status.total_emails;
+        }
+        
+        if (unreadEmails) {
+            unreadEmails.textContent = status.unread_emails;
+        }
+        
+        if (lastSync) {
+            lastSync.textContent = status.last_sync_at ? 
+                new Date(status.last_sync_at).toLocaleString() : 'Never';
+        }
+        
+        // Show/hide sections
+        if (gmailNotConnected) {
+            gmailNotConnected.style.display = 'none';
+        }
+        
+        if (gmailConnected) {
+            gmailConnected.style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error updating Gmail UI:', error);
+        showGmailNotConnected();
+    }
+}
+
+function showGmailNotConnected() {
+    const connectionStatus = document.getElementById('gmail-connection-status');
+    const gmailNotConnected = document.getElementById('gmail-not-connected');
+    const gmailConnected = document.getElementById('gmail-connected');
+    
+    if (connectionStatus) {
+        connectionStatus.textContent = 'Not Connected';
+        connectionStatus.className = 'badge bg-warning';
+    }
+    
+    if (gmailNotConnected) {
+        gmailNotConnected.style.display = 'block';
+    }
+    
+    if (gmailConnected) {
+        gmailConnected.style.display = 'none';
+    }
+}
+
+async function connectGmail() {
+    try {
+        console.log('Connect Gmail button clicked! [VERSION 4.0 - SESSION BASED]');
+        console.log('Current token:', token ? 'present' : 'missing');
+        
+        // Check if we have a valid token
+        if (!token) {
+            alert('You need to be logged in to connect Gmail. Please refresh the page and login again.');
+            return;
+        }
+        
+        // Redirect with token as cookie or query parameter
+        // The backend will handle authentication via session/cookie
+        window.location.href = `${API_URL}/gmail/auth?token=${encodeURIComponent(token)}`;
+        
+    } catch (error) {
+        console.error('Error connecting Gmail:', error);
+        alert('Failed to connect Gmail. Please try again.');
+    }
+}
+
+async function disconnectGmail() {
+    try {
+        // Get current account
+        const accountsResponse = await fetch(`${API_URL}/gmail/accounts`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!accountsResponse.ok) {
+            throw new Error('Failed to get Gmail accounts');
+        }
+        
+        const accounts = await accountsResponse.json();
+        
+        if (accounts.length === 0) {
+            showGmailNotConnected();
+            return;
+        }
+        
+        const account = accounts[0];
+        
+        // Disconnect account
+        const response = await fetch(`${API_URL}/gmail/disconnect/${account.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to disconnect Gmail');
+        }
+        
+        showGmailNotConnected();
+        alert('Gmail account disconnected successfully');
+        
+    } catch (error) {
+        console.error('Error disconnecting Gmail:', error);
+        alert('Failed to disconnect Gmail. Please try again.');
+    }
+}
+
+async function syncEmails() {
+    try {
+        console.log('🔄 Sync Emails button clicked!');
+        
+        const syncBtn = document.getElementById('sync-emails-btn');
+        console.log('Sync button element:', syncBtn ? 'found' : 'missing');
+        
+        if (syncBtn) {
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        }
+        
+        // Get current account
+        const accountsResponse = await fetch(`${API_URL}/gmail/accounts`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!accountsResponse.ok) {
+            throw new Error('Failed to get Gmail accounts');
+        }
+        
+        const accounts = await accountsResponse.json();
+        
+        if (accounts.length === 0) {
+            throw new Error('No Gmail account connected');
+        }
+        
+        const account = accounts[0];
+        
+        // Sync emails with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+        
+        console.log(`🔄 Starting sync for account ${account.id} (max 100 emails)`);
+        
+        const syncResponse = await fetch(`${API_URL}/gmail/sync`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                account_id: account.id,
+                max_emails: 100
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!syncResponse.ok) {
+            const errorText = await syncResponse.text();
+            console.error('Sync failed:', errorText);
+            throw new Error(`Failed to sync emails: ${syncResponse.status} ${syncResponse.statusText}`);
+        }
+        
+        const syncData = await syncResponse.json();
+        console.log('✅ Sync completed:', syncData);
+        
+        alert(`Successfully synced ${syncData.emails_synced} emails`);
+        
+        // Update Gmail status
+        await checkGmailStatus();
+        
+    } catch (error) {
+        console.error('Error syncing emails:', error);
+        
+        if (error.name === 'AbortError') {
+            alert('Sync timed out after 2 minutes. Please try again or check your internet connection.');
+        } else {
+            alert(`Failed to sync emails: ${error.message}`);
+        }
+    } finally {
+        const syncBtn = document.getElementById('sync-emails-btn');
+        if (syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.innerHTML = '<i class="fas fa-sync"></i> Sync Emails';
+        }
+    }
+}
+
+async function searchEmails() {
+    try {
+        const query = document.getElementById('email-search-query').value.trim();
+        if (!query) {
+            alert('Please enter a search query');
+            return;
+        }
+        
+        const searchBtn = document.getElementById('search-emails-btn');
+        if (searchBtn) {
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+        }
+        
+        // Get filter values
+        const emailType = document.getElementById('email-type-filter').value;
+        const senderEmail = document.getElementById('email-sender-filter').value;
+        const dateFrom = document.getElementById('email-date-from').value;
+        const dateTo = document.getElementById('email-date-to').value;
+        
+        // Build search request
+        const searchRequest = {
+            query: query,
+            limit: 20
+        };
+        
+        if (emailType) searchRequest.email_type = emailType;
+        if (senderEmail) searchRequest.sender_email = senderEmail;
+        if (dateFrom) searchRequest.date_from = dateFrom;
+        if (dateTo) searchRequest.date_to = dateTo;
+        
+        // Search emails
+        const response = await fetch(`${API_URL}/gmail/search`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(searchRequest)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to search emails');
+        }
+        
+        const searchData = await response.json();
+        
+        // Display results
+        displayEmailSearchResults(searchData.emails, searchData.processing_time_ms);
+        
+    } catch (error) {
+        console.error('Error searching emails:', error);
+        alert('Failed to search emails. Please try again.');
+    } finally {
+        const searchBtn = document.getElementById('search-emails-btn');
+        if (searchBtn) {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fas fa-search"></i> Search Emails';
+        }
+    }
+}
+
+function displayEmailSearchResults(emails, processingTime) {
+    const resultsContainer = document.getElementById('email-search-results');
+    const resultsList = document.getElementById('email-results-list');
+    
+    if (!resultsContainer || !resultsList) {
+        return;
+    }
+    
+    // Clear previous results
+    resultsList.innerHTML = '';
+    
+    if (emails.length === 0) {
+        resultsList.innerHTML = '<div class="list-group-item">No emails found matching your search criteria.</div>';
+    } else {
+        emails.forEach(email => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            
+            // Format date
+            const sentDate = new Date(email.sent_at).toLocaleString();
+            
+            // Get email type badge
+            const typeBadge = getEmailTypeBadge(email.email_type);
+            
+            item.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${email.subject}</h6>
+                    <small>${sentDate}</small>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted">From: ${email.sender_email}</small>
+                    ${typeBadge}
+                </div>
+                <p class="mb-1">${truncateText(email.body_text, 150)}</p>
+                <small class="text-muted">
+                    ${email.is_read ? '✓ Read' : '● Unread'}
+                </small>
+            `;
+            
+            resultsList.appendChild(item);
+        });
+    }
+    
+    // Add processing time info
+    const timingInfo = document.createElement('div');
+    timingInfo.className = 'text-muted small mt-2';
+    timingInfo.textContent = `Found ${emails.length} results in ${processingTime}ms`;
+    resultsList.appendChild(timingInfo);
+    
+    // Show results container
+    resultsContainer.style.display = 'block';
+}
+
+function getEmailTypeBadge(emailType) {
+    const badges = {
+        'business': '<span class="badge bg-primary">Business</span>',
+        'personal': '<span class="badge bg-success">Personal</span>',
+        'promotional': '<span class="badge bg-warning">Promotional</span>',
+        'transactional': '<span class="badge bg-info">Transactional</span>',
+        'support': '<span class="badge bg-secondary">Support</span>',
+        'generic': '<span class="badge bg-light text-dark">Generic</span>'
+    };
+    
+    return badges[emailType] || badges['generic'];
+}
+
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+// Debug function to test Gmail button manually
+function testGmailButton() {
+    console.log('Testing Gmail button manually...');
+    const btn = document.getElementById('connect-gmail-btn');
+    console.log('Button found:', btn ? 'yes' : 'no');
+    if (btn) {
+        console.log('Button text:', btn.textContent);
+        console.log('Button disabled:', btn.disabled);
+        console.log('Button style.display:', btn.style.display);
+        btn.style.border = '3px solid red'; // Visual indicator
+        btn.click();
+    }
+}
+
+// Add a simple button test on page load
+function debugGmailButton() {
+    setTimeout(() => {
+        console.log('=== GMAIL BUTTON DEBUG ===');
+        const btn = document.getElementById('connect-gmail-btn');
+        if (btn) {
+            console.log('✓ Button exists');
+            console.log('Text:', btn.textContent);
+            console.log('Disabled:', btn.disabled);
+            console.log('Parent visible:', btn.parentElement.style.display !== 'none');
+            
+            // Add a temporary border to make it obvious
+            btn.style.border = '2px solid blue';
+            
+            // Test click programmatically
+            btn.addEventListener('click', function() {
+                console.log('✓ Button click detected!');
+            });
+        } else {
+            console.log('✗ Button not found');
+        }
+    }, 2000);
+}
+
+// Make functions available globally for debugging
+window.testGmailButton = testGmailButton;
+window.connectGmail = connectGmail;
+window.initializeGmailUI = initializeGmailUI;
+window.syncEmails = syncEmails;
+
+// Helper function to manually test sync
+window.testSync = async function() {
+    console.log('🧪 Testing sync manually...');
+    try {
+        await syncEmails();
+    } catch (error) {
+        console.error('Manual sync test failed:', error);
+    }
+}; 

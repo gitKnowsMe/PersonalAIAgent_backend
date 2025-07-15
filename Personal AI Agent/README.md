@@ -1,149 +1,187 @@
 # Personal AI Agent
 
-A fully private AI assistant for your documents. Upload documents, ask questions, and get context-aware answers using a retrieval-augmented generation pipeline.
+A privacy-first AI assistant for PDF documents and Gmail emails with advanced document classification and processing capabilities.
 
-## Features
+## 🚀 Key Features
 
-- 🔒 **Fully Private**: All processing happens locally on your machine
-- 📄 **Document Processing**: Upload and process various document types
-- 🔍 **Semantic Search**: Find relevant information using vector similarity search
-- 🤖 **AI-Powered Answers**: Get context-aware answers to your questions
-- 🔐 **User Authentication**: Secure access with JWT authentication
-- 📊 **Query History**: Keep track of your questions and answers
-- 📝 **Logging**: Comprehensive logging of all system activities
+- **100% Privacy**: Local LLM processing with no external API calls (except Gmail OAuth)
+- **PDF + Gmail Integration**: Unified processing for PDF documents and Gmail emails  
+- **Smart Content Classification**: Automatic categorization for documents and emails
+- **Category-Specific Processing**: Optimized chunking and indexing per content type
+- **Thread-Aware Email Processing**: Conversation context preservation
+- **Cross-Platform Queries**: Search across PDFs and emails with unified results
 
-## Tech Stack
+## 📧 Gmail Integration (✅ COMPLETED)
 
-- **Backend**: FastAPI
-- **Database**: PostgreSQL/SQLite
-- **Vector Store**: FAISS
-- **LLM**: Phi-2 (local)
-- **Embeddings**: BGE-Small
-- **Authentication**: JWT
-- **Frontend**: HTML/CSS/JavaScript
+The Personal AI Agent now includes comprehensive Gmail integration with:
 
-## Getting Started
+### Features
+- **OAuth2 Authentication**: Secure Google account connection
+- **Email Classification**: 5 types (business, personal, promotional, transactional, support)
+- **Thread-Aware Processing**: Preserves conversation context
+- **Vector Search**: Semantic search across email content
+- **Attachment Support**: Process email attachments
+- **Privacy Controls**: Selective sync and content filtering
 
-### Prerequisites
+### Email Categories
+- **Business**: Meeting invites, project updates, work communications
+- **Personal**: Family/friend emails, personal communications
+- **Promotional**: Marketing emails, newsletters, deals
+- **Transactional**: Receipts, confirmations, account notifications
+- **Support**: Customer service, technical support communications
 
-- Python 3.9+
-- PostgreSQL (optional, SQLite works out of the box)
+## 📄 Document Categories
 
-### Installation
+### Financial Documents (Bank Statements, Invoices, Receipts)
+- **Processing**: Small chunks (500 chars), structured parsing
+- **Use Cases**: Expense tracking, financial analysis, transaction queries
 
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/personal-ai-agent.git
-cd personal-ai-agent
+### Long-format Documents (Research Papers, Reports, Contracts)
+- **Processing**: Large chunks (1500 chars), semantic analysis  
+- **Use Cases**: Research queries, detailed analysis, document understanding
+
+### Generic Documents (Resumes, Letters, Notes)
+- **Processing**: Balanced chunks (1000 chars), hybrid approach
+- **Use Cases**: Personal information retrieval, skill queries
+
+## 🛠️ Setup Instructions
+
+### 1. Environment Setup
+
+Create a `.env` file in the root directory with the following configuration:
+
+```env
+# Personal AI Agent Environment Configuration
+
+# Server Configuration
+HOST=localhost
+PORT=8000
+DEBUG=true
+
+# Database Configuration
+DATABASE_URL=sqlite:///./personal_ai_agent.db
+
+# Security Configuration
+SECRET_KEY=your-secret-key-here
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+
+# Gmail Integration Configuration
+GMAIL_CLIENT_ID=your-gmail-client-id
+GMAIL_CLIENT_SECRET=your-gmail-client-secret
+GMAIL_REDIRECT_URI=http://localhost:8000/api/gmail/callback
+GMAIL_MAX_EMAILS_PER_SYNC=1000
+GMAIL_DEFAULT_SYNC_LIMIT=100
+
+# LLM Configuration
+LLM_MODEL_PATH=./models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+USE_METAL=true
+METAL_N_GPU_LAYERS=1
+
+# Embedding Configuration
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+EMBEDDING_BATCH_SIZE=32
+EMBEDDING_NORMALIZE=true
+
+# Vector Store Configuration
+VECTOR_DB_PATH=./data/vector_db
+EMAIL_VECTOR_DB_PATH=./data/email_vectors
+VECTOR_SEARCH_TOP_K=5
+VECTOR_SIMILARITY_THRESHOLD=0.3
+
+# Email Storage Configuration
+EMAIL_STORAGE_DIR=./static/emails
+
+# Logging Configuration
+LOG_LEVEL=INFO
 ```
 
-2. Create a virtual environment
+### 2. Gmail API Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Gmail API
+4. Create OAuth2 credentials
+5. Add your client ID and secret to the `.env` file
+
+### 3. Install Dependencies
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-3. Install dependencies
-```bash
-   pip install -r requirements.txt
-   ```
+### 4. Download AI Model
 
-4. Download the model
 ```bash
 python download_model.py
 ```
 
-5. Create an admin user
+### 5. Setup Database
+
 ```bash
-python create_admin.py
+python setup_db.py
 ```
 
-6. Start the server
+### 6. Run the Application
+
 ```bash
-   python main.py
-   ```
-
-7. Access the UI at http://localhost:8001
-
-## Usage
-
-1. Log in with your admin credentials
-2. Upload documents
-3. Ask questions about your documents
-4. View your query history
-
-## Logging
-
-The system includes comprehensive logging for monitoring and debugging:
-
-- All logs are stored in the `logs` directory
-- Log files are automatically rotated (10MB max size, 5 backups)
-- Logs include:
-  - Server startup/shutdown events
-  - Authentication attempts (success/failure)
-  - Document uploads and processing
-  - Query requests and responses
-  - Errors and exceptions
-
-To view logs:
-```bash
-cat logs/app.log
+python main.py
 ```
 
-## Project Structure
+The application will be available at `http://localhost:8000`
 
-```
-personal-ai-agent/
-├── app/                  # Main application code
-│   ├── api/              # API endpoints
-│   ├── core/             # Core functionality
-│   ├── db/               # Database models and connection
-│   ├── schemas/          # Pydantic schemas
-│   └── utils/            # Utility functions
-├── data/                 # Data storage
-│   └── vector_db/        # FAISS vector database files
-├── logs/                 # Log files
-├── models/               # LLM model files
-├── static/               # Static files
-│   ├── css/              # CSS files
-│   ├── js/               # JavaScript files
-│   └── uploads/          # Uploaded documents
-├── main.py               # Entry point
-└── requirements.txt      # Dependencies
-```
+## 📚 API Endpoints
 
-## License
+### Gmail Integration
+- `GET /api/gmail/auth-url` - Get OAuth2 authorization URL
+- `GET /api/gmail/callback` - OAuth2 callback handler
+- `POST /api/gmail/sync` - Sync emails from Gmail
+- `POST /api/gmail/search` - Search emails using vector similarity
+- `GET /api/gmail/status` - Get account status and sync info
+- `DELETE /api/gmail/disconnect` - Disconnect Gmail account
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Document Processing
+- `POST /api/documents/upload` - Upload and process PDF documents
+- `GET /api/documents/` - List user documents
+- `DELETE /api/documents/{id}` - Delete document
 
-## Acknowledgements
+### Queries
+- `POST /api/queries/` - Ask questions about documents and emails
+- `GET /api/queries/` - Get query history
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [FAISS](https://github.com/facebookresearch/faiss)
-- [Phi-2](https://huggingface.co/microsoft/phi-2)
-- [BGE Embeddings](https://huggingface.co/BAAI/bge-small-en-v1.5)
+## 🔧 Architecture
 
-## Recent Changes
+The application uses a modern, scalable architecture:
 
-### Syntax and Import Fixes
-- Fixed syntax errors that were preventing the server from starting.
-- Corrected import statements to ensure all modules are correctly loaded.
+- **FastAPI**: High-performance async API framework
+- **PostgreSQL**: Metadata and user management
+- **FAISS**: Vector similarity search
+- **Mistral 7B**: Local language model
+- **OAuth2**: Secure Gmail authentication
+- **Category-Based Storage**: Organized vector indices
 
-### Model Loading
-- Ensured the correct model (Mistral) is loaded for the AI agent.
+## 📊 Current Status
 
-### Vector Search Parameters
-- Increased vector search parameters to allow the system to find the correct data, specifically for March 2023 expenses.
+✅ **Phase 1 Complete**: Gmail Integration
+- OAuth2 authentication ✅
+- Email sync and processing ✅  
+- Email classification ✅
+- Vector storage and search ✅
+- API endpoints ✅
 
-### Code Refactoring
-- Refactored code to prevent hard-coded responses, particularly for general AI-related questions.
-- Implemented a configuration file to centralize AI behavior settings.
-- Updated the LLM module to use the new configuration.
+🔄 **Phase 2 In Progress**: Security Hardening
+- Rate limiting implementation
+- CORS configuration
+- Debug logging cleanup
 
-### Query and Response Improvements
-- Improved query classification and response validation.
-- Enhanced system prompts to better guide the AI's responses.
+📋 **Phase 3 Planned**: Advanced Features
+- Email analytics and insights
+- Thread summarization
+- Cross-reference between emails and PDFs
 
-### Testing and Debugging
-- Successfully started the server and tested the admin login.
-- Identified and fixed an error in document searching that was preventing successful query responses. 
+## 🤝 Contributing
+
+Please read the `IMPLEMENTATION_PLAN.md` and `Personal_AI_Agent_SRD.md` for detailed technical information.
+
+## 📄 License
+
+This project is licensed under the MIT License. 
