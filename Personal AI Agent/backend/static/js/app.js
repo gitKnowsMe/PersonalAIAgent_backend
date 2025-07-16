@@ -55,6 +55,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM elements
     initDOMElements();
     
+    // Check for Gmail OAuth callback success
+    const urlParams = new URLSearchParams(window.location.search);
+    const gmailConnected = urlParams.get('gmail_connected');
+    
+    if (gmailConnected) {
+        console.log("Gmail OAuth callback detected for email:", gmailConnected);
+        // Clear the URL parameter to clean up the URL
+        window.history.replaceState(null, null, window.location.pathname);
+        
+        // Show success message
+        alert(`Gmail account ${gmailConnected} connected successfully! Please log in to access your emails.`);
+    }
+    
     // Check if user is logged in
     if (token) {
         console.log("User is logged in with token:", token);
