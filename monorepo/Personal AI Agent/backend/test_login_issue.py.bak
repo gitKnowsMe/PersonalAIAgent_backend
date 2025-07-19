@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""
+Test script to diagnose login issue
+"""
+import json
+import requests
+import sys
+import sqlite3
+from pathlib import Path
+
+def test_backend_connectivity():
+    """Test if backend server is running"""
+    print("1. Testing backend connectivity...")
+    
+    try:
+        # Test root endpoint
+        response = requests.get("http://localhost:8000/", timeout=5)
+        if response.status_code == 200:
+            print("   ✓ Backend server is running")
+            data = response.json()
+            print(f"   - Status: {data.get('status')}")
+            print(f"   - Version: {data.get('version')}")
+            return True
+        else:
+            print(f"   ✗ Backend returned status {response.status_code}")
+            return False
+    except requests.exceptions.ConnectionError:
+        print("   ✗ Cannot connect to backend server")
+        print("   Recommendation: Run 'python start_backend.py' to start the backend")
+        return False
+    except Exception as e:
+        print(f"   ✗ Error: {e}")
+        return False
+
+def test_health_endpoints():
+    """Test health check endpoints"""
+    print("\n2. Testing health endpoints...")
+    
+    endpoints = [
+        ("Health Check", "http://localhost:8000/api/health-check"),
+        ("Backend Status", "http://localhost:8000/api/backend-status")
+    ]
+    
+    all_ok = True
+    for name, url in endpoints:
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                print(f"   ✓ {name}: OK")
+                data = response.json()
+                if "status" in data:
+                    print(f"     - Status: {data['status']}")
+            else:
+                print(f"   ✗ {name}: HTTP {response.status_code}")
+                all_ok = False
+        except Exception as e:
+            print(f"   ✗ {name}: {e}")
+            all_ok = False
+    
+    return all_ok
+
+def check_database_users():
+    """Check database for users"""
+    print("\n3. Checking database for users...")
+    
+    # Find database files
+    base_dir = Path(__file__).parent
+    db_files = [
+        base_dir / "personal_ai_agent.db",
+        base_dir / "data" / "app.db"
+    ]
+    
+    found_users = False
+    for db_path in db_files:
+        if db_path.exists():
+            print(f"   ✓ Found database: {db_path}")
+            try:
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                
+                # Check if users table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+                if cursor.fetchone():
+                    # Get all users
+                    cursor.execute("SELECT id, username, email, is_active FROM users")
+                    users = cursor.fetchall()
+                    
+                    print(f"   ✓ Found {len(users)} users:")
+                    for user in users:
+                        user_id, username, email, is_active = user
+                        print(f"     - {username} (ID: {user_id}, Email: {email}, Active: {is_active})")
+                        if username == "gmail_tester":
+                            found_users = True
+                
+                conn.close()
+            except sqlite3.Error as e:
+                print(f"   ✗ Database error: {e}")
+    
+    return found_users
+
+def test_login_endpoint():
+    """Test login endpoint with common credentials"""
+    print("\n4. Testing login endpoint...")
+    
+    # Common test credentials
+    test_credentials = [
+        ("gmail_tester", "test123"),
+        ("gmail_tester", "password"),
+        ("gmail_tester", "admin123"),
+        ("admin", "admin123"),
+        ("admin", "password")
+    ]
+    
+    for username, password in test_credentials:
+        try:
+            login_data = {
+                "username": username,
+                "password": password
+            }
+            
+            response = requests.post(
+                "http://localhost:8000/api/login",
+                json=login_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print(f"   ✓ Login successful with {username}/{password}")
+                data = response.json()
+                if "access_token" in data:
+                    print(f"     - Access token received: {data['access_token'][:20]}...")
+                return True
+            elif response.status_code == 401:
+                print(f"   ✗ Login failed for {username}/{password}: Invalid credentials")
+            else:
+                print(f"   ✗ Login failed for {username}/{password}: HTTP {response.status_code}")
+                
+        except Exception as e:
+            print(f"   ✗ Login test error for {username}: {e}")
+    
+    return False
+
+def test_auth_endpoint():
+    """Test auth endpoint structure"""
+    print("\n5. Testing auth endpoint structure...")
+    
+    try:
+        # Test with empty credentials to see error format
+        response = requests.post("http://localhost:8000/api/login", json={})
+        print(f"   - Empty login response: HTTP {response.status_code}")
+        
+        # Test with invalid credentials
+        response = requests.post("http://localhost:8000/api/login", json={"username": "invalid", "password": "invalid"})
+        print(f"   - Invalid login response: HTTP {response.status_code}")
+        
+        if response.status_code == 422:
+            print("   ✓ Auth endpoint is working (validation error expected)")
+            return True
+        elif response.status_code == 401:
+            print("   ✓ Auth endpoint is working (unauthorized as expected)")
+            return True
+        else:
+            print(f"   ? Unexpected response: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"   ✗ Auth endpoint error: {e}")
+        return False
+
+def main():
+    """Run all tests"""
+    print("=== Backend Login Issue Investigation ===\n")
+    
+    results = {
+        "backend_running": test_backend_connectivity(),
+        "health_ok": test_health_endpoints(),
+        "users_found": check_database_users(),
+        "login_works": test_login_endpoint(),
+        "auth_endpoint_ok": test_auth_endpoint()
+    }
+    
+    print("\n=== Summary ===")
+    for test_name, result in results.items():
+        status = "✓" if result else "✗"
+        print(f"{status} {test_name}: {result}")
+    
+    print("\n=== Recommendations ===")
+    if not results["backend_running"]:
+        print("1. Start the backend server: python start_backend.py")
+    elif not results["users_found"]:
+        print("1. Create admin user: python create_admin.py")
+    elif not results["login_works"]:
+        print("1. Check user credentials in database")
+        print("2. Check password hashing in authentication code")
+    elif results["auth_endpoint_ok"]:
+        print("1. Backend is working correctly")
+        print("2. Issue is likely on the frontend side")
+        print("3. Check frontend API calls and error handling")
+    else:
+        print("1. Check backend server logs for errors")
+        print("2. Verify database schema and user table")
+
+if __name__ == "__main__":
+    main()
