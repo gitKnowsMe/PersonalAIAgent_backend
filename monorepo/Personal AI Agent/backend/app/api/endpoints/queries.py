@@ -600,13 +600,51 @@ async def create_query(
 
 @router.get("/queries", response_model=List[QueryResponse])
 async def get_queries(
+    limit: int = 50,
+    offset: int = 0,
+    since: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get all queries for the current user
-    """
-    logger.info(f"Retrieving query history for user {current_user.username}")
+    Get queries for the current user with pagination and date filtering
     
-    queries = db.query(Query).filter(Query.user_id == current_user.id).order_by(Query.created_at.desc()).all()
+    Args:
+        limit: Maximum number of queries to return (default: 50, max: 100)
+        offset: Number of queries to skip for pagination (default: 0)
+        since: ISO date string to filter queries after this date (optional)
+    """
+    logger.info(f"Retrieving query history for user {current_user.username} (limit={limit}, offset={offset}, since={since})")
+    
+    # Validate limit
+    if limit > 100:
+        limit = 100
+    if limit < 1:
+        limit = 1
+        
+    # Validate offset
+    if offset < 0:
+        offset = 0
+    
+    # Build query
+    query = db.query(Query).filter(Query.user_id == current_user.id)
+    
+    # Add date filtering if provided
+    if since:
+        try:
+            from datetime import datetime
+            since_date = datetime.fromisoformat(since.replace('Z', '+00:00'))
+            query = query.filter(Query.created_at >= since_date)
+            logger.info(f"Filtering queries since {since_date}")
+        except ValueError as e:
+            logger.warning(f"Invalid since date format: {since}, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format. Use ISO format (e.g., '2024-01-01T00:00:00Z')"
+            )
+    
+    # Apply ordering, pagination
+    queries = query.order_by(Query.created_at.desc()).offset(offset).limit(limit).all()
+    
+    logger.info(f"Retrieved {len(queries)} queries for user {current_user.username}")
     return queries 
