@@ -1,5 +1,6 @@
 name: Build Personal AI Agent Executables
 
+# Triggers on tag pushes (v*) and manual workflow dispatch
 on:
   push:
     tags:
