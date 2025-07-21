@@ -27,6 +27,26 @@ This monorepo implements a sophisticated AI agent system with three distinct dep
 2. **Hybrid Deployment** - Separate frontend/backend with CORS integration
 3. **Monolithic** - Traditional full-stack with served static frontend
 
+## Documentation Index
+
+### 📚 Core Documentation
+- **[CLAUDE.md](CLAUDE.md)** - Main project guidance and architecture overview
+- **[README.md](Personal AI Agent/README.md)** - Getting started and installation guide
+
+### 🔧 CI/CD & Build System  
+- **[CICD.md](CICD.md)** - Complete GitHub Actions workflow documentation
+- **[BUILD_VERSION.md](BUILD_VERSION.md)** - Version management and release procedures
+- **[.github/workflows/build-executables.yml](.github/workflows/build-executables.yml)** - Multi-platform build workflow
+
+### 🖥️ Desktop Installer System
+- **[PHASE_3_DISTRIBUTION_COMPLETE.md](PHASE_3_DISTRIBUTION_COMPLETE.md)** - Desktop installer implementation
+- **[PersonalAIAgent_frontend/CLAUDE.md](PersonalAIAgent_frontend/CLAUDE.md)** - Frontend architecture and integration
+
+### 📋 Development Guides
+- **[Personal AI Agent/backend/TESTING_GUIDE.md](Personal AI Agent/backend/TESTING_GUIDE.md)** - Testing procedures
+- **[Personal AI Agent/backend/DEPLOYMENT.md](Personal AI Agent/backend/DEPLOYMENT.md)** - Deployment configurations
+- **[Personal AI Agent/backend/TROUBLESHOOTING.md](Personal AI Agent/backend/TROUBLESHOOTING.md)** - Common issues and solutions
+
 ## Quick Start Commands
 
 ```bash
