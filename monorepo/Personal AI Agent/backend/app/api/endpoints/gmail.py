@@ -28,7 +28,7 @@ from app.services.email.email_processor import EmailProcessor as NewEmailProcess
 from app.services.email.email_store import EmailStore
 from app.services.email.email_classifier import EmailClassifier
 from app.services.vector_store_service import get_vector_store_manager
-from app.exceptions import (
+from app.exceptions.email_exceptions import (
     EmailServiceError,
     AuthenticationError,
     AuthorizationError,
@@ -377,8 +377,16 @@ async def sync_gmail_emails(
         # Process and classify synced emails in background (don't wait)
         if sync_response.emails_synced > 0:
             # Start background task for email processing - don't await
-            import asyncio
-            asyncio.create_task(_process_synced_emails(email_account.id, current_user.id))
+            try:
+                import asyncio
+                task = asyncio.create_task(_process_synced_emails(email_account.id, current_user.id))
+                # Add done callback to log any background task failures
+                task.add_done_callback(lambda t: logger.error(f"Background email processing task failed: {t.exception()}") if t.exception() else None)
+                logger.info(f"Started background processing task for {sync_response.emails_synced} emails")
+            except Exception as background_error:
+                # Background task creation failure should not affect sync response
+                logger.error(f"Failed to start background email processing: {background_error}")
+                logger.warning("Email sync completed, but background processing could not be started")
         
         logger.info(f"Synced {sync_response.emails_synced} emails for user {current_user.id}")
         
@@ -423,10 +431,24 @@ async def sync_gmail_emails(
             detail=f"Sync error: {e.message}"
         )
     except Exception as e:
-        logger.error(f"Error syncing Gmail emails for user {current_user.id}: {e}")
+        # Import traceback for better error logging
+        import traceback
+        
+        # Log full traceback for debugging
+        logger.error(f"Unexpected error syncing Gmail emails for user {current_user.id}: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        
+        # Ensure we always return a structured error response
+        error_detail = {
+            "error": "internal_server_error",
+            "message": "An unexpected error occurred during Gmail sync",
+            "details": str(e) if str(e) else "Unknown error",
+            "user_message": "Gmail sync failed due to an internal error. Please try again in a few moments."
+        }
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to sync emails: {str(e)}"
+            detail=error_detail
         )
 
 
@@ -630,10 +652,20 @@ async def search_emails(
         )
         
     except Exception as e:
+        import traceback
         logger.error(f"Error searching emails for user {current_user.id}: {e}")
+        logger.error(f"Email search traceback: {traceback.format_exc()}")
+        
+        error_detail = {
+            "error": "email_search_failed",
+            "message": "Failed to search emails",
+            "details": str(e) if str(e) else "Unknown error",
+            "user_message": "Email search failed. Please try again."
+        }
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to search emails"
+            detail=error_detail
         )
 
 
@@ -644,6 +676,8 @@ async def _process_synced_emails(email_account_id: int, user_id: int):
     from app.db.session_manager import background_session
     
     try:
+        logger.info(f"Starting background email processing for account {email_account_id}, user {user_id}")
+        
         with background_session() as db:
             # Get email account information
             email_account = db.query(EmailAccount).filter(EmailAccount.id == email_account_id).first()
@@ -716,5 +750,8 @@ async def _process_synced_emails(email_account_id: int, user_id: int):
             logger.info(f"Processed {len(unprocessed_emails)} emails for account {email_account.email_address}")
         
     except Exception as e:
-        logger.error(f"Error processing synced emails for account {email_account_id}: {e}")
+        import traceback
+        logger.error(f"Error processing synced emails for account {email_account_id}, user {user_id}: {e}")
+        logger.error(f"Background processing traceback: {traceback.format_exc()}")
         # Session rollback is handled automatically by the context manager
+        # Background task failures should not affect the main sync response

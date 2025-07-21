@@ -27,25 +27,15 @@ from app.core.config import settings
 from app.db.models import User, EmailAccount, Email, EmailAttachment
 from app.schemas.email import EmailCreate, GmailSyncResponse
 from app.services.email_auth_service import EmailAuthService
-from app.exceptions import (
+from app.exceptions.email_exceptions import (
     GmailApiError,
-    GmailAuthenticationError,
-    GmailTokenError,
-    GmailTokenExpiredError,
-    GmailTokenRefreshError,
-    GmailQuotaExceededError,
-    GmailRateLimitError,
-    GmailSyncError,
-    GmailMessageError,
-    NetworkError,
-    ConnectionTimeoutError,
-    APIConnectionError,
     AuthenticationError,
     AuthorizationError,
     TokenRefreshError,
     RateLimitError,
     QuotaExceededError,
     EmailSyncError,
+    NetworkError,
     handle_gmail_api_error,
     handle_network_error
 )
