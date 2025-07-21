@@ -237,14 +237,45 @@ NEXT_PUBLIC_APP_NAME=Personal AI Agent
 
 ## Deployment Strategies
 
-### Option 1: Single Executable Backend (RECOMMENDED - COMPLETED)
+### Option 1: Single Executable Backend (RECOMMENDED - ✅ COMPLETED)
 - **Use**: Desktop application deployment for end users
-- **Frontend**: Next.js on Vercel (public, accessible to everyone)
-- **Backend**: Platform-specific executable with SQLite database (private, runs locally)
-- **Database**: SQLite portable database (perfect for single-user desktop scenario)
+- **Frontend**: Next.js on Vercel (public, accessible to everyone) - https://personal-ai-agent-frontend.vercel.app
+- **Backend**: Platform-specific executable with hybrid PostgreSQL/SQLite database (private, runs locally)
+- **Database**: Hybrid system - PostgreSQL for development, SQLite for portable executables
 - **User Experience**: Visit web → Register → Download → Install → Download models → Auto-connect
 - **Benefits**: Complete privacy, no server setup, all data local, AI processing local, zero dependencies
 - **Build System**: PyInstaller-based with progressive model downloading (~100MB initial + ~4GB models)
+
+### Desktop Installer System (Feature Branch: desktop-installer)
+**Status**: ✅ Complete - All 3 phases implemented and deployed
+
+**Phase 1 - Enhanced Frontend Detection & Installation Flow**:
+- Smart backend detection across multiple ports (8000, 8080, 3001, 5000, 8888)
+- Three-state routing system: `available`, `installed-not-running`, `not-installed`
+- Backend installer component with platform detection (Windows/macOS/Linux)
+- Real-time installation monitoring and progress tracking
+- Automatic backend discovery and connection after installation
+
+**Phase 2 - Single Executable Backend Distribution**:
+- Complete PyInstaller configuration with 500+ lines of optimized build script
+- Hybrid database system supporting both PostgreSQL (dev) and SQLite (portable)
+- Progressive model downloading system (separates executables from AI models)
+- Platform-specific executable generation with cross-platform compatibility
+- Portable database mode with WAL optimization and foreign key constraints
+
+**Phase 3 - CI/CD Pipeline & Auto-Update System**:
+- GitHub Actions CI/CD pipeline for automated cross-platform builds
+- Matrix strategy building Windows (.exe), macOS (.app), and Linux (.AppImage) versions
+- Auto-updater system with GitHub API integration and integrity verification
+- Automated release management with platform-specific download links
+- Code signing infrastructure for Windows and macOS distributions
+
+**Implementation Files**:
+- `build_executable.py` - PyInstaller configuration and build system
+- `app/db/database_portable.py` - Hybrid PostgreSQL/SQLite database system
+- `auto_updater.py` - GitHub API-based auto-update system with integrity checks
+- `.github/workflows/build-executables.yml` - Complete CI/CD pipeline
+- Frontend: Enhanced backend detection, installation guide, and status monitoring
 
 ### Option 2: Hybrid Development (PersonalAIAgent_frontend + Backend)
 - **Use**: Modern UI development with local backend
@@ -353,6 +384,79 @@ python -m pytest tests/test_document_classifier.py
 - **Config-driven**: Environment variables control all settings
 - **Modular design**: Separate processing strategies per document/email category
 - **Multi-frontend**: Legacy static (production) + modern Next.js (Vercel deployment)
+
+## Known Issues and Fixes
+
+### Gmail Integration Issues (Jan 2025)
+**Issue**: Gmail sync returns empty error responses causing frontend console errors:
+- "API Error Response: {}" (lib/api.ts:189)
+- "Server error. Please try again later." (lib/api.ts:227)
+
+**Root Cause**: Import errors in `Personal AI Agent/backend/app/api/endpoints/gmail.py`:
+- Imports from non-existent `app.exceptions` instead of `app.exceptions.email_exceptions`
+- Exception handling failures result in HTTP 500 with empty JSON response bodies
+- Background email processing (`_process_synced_emails`) lacks proper error handling
+
+**Status**: Phase 1 completed - Import and error handling issues resolved
+
+**Fix Plan**:
+- **Phase 1** (✅ Completed): Fixed imports, ensured structured JSON error responses, added fallback handling
+- **Phase 2**: Enhance Gmail service robustness and background processing
+- **Phase 3**: Improve frontend error handling and user messaging  
+- **Phase 4**: Add config validation and enhanced logging
+
+**Files Affected**:
+- `Personal AI Agent/backend/app/api/endpoints/gmail.py:31-40` - Import fixes needed
+- `PersonalAIAgent_frontend/lib/api.ts:189,227` - Error handling locations
+- `PersonalAIAgent_frontend/components/gmail-settings.tsx:105` - Sync trigger point
+
+### Desktop Installer UX Issues (Jan 2025)
+**Issue**: Critical UX problem where "Get Started" button led users to login page with "Backend is not available" errors when no backend was running, creating a poor first-time user experience.
+
+**Root Cause**: Application routing didn't check backend availability before directing users to authentication, causing confusion and failed login attempts.
+
+**Status**: ✅ Fixed - Enhanced routing system implemented
+
+### GitHub Download URL Issues (Jan 2025)
+**Issue**: Backend installer download buttons redirect to 404 "Not Found" GitHub URLs, preventing users from downloading the desktop application.
+
+**Root Cause**: Hardcoded placeholder repository URLs in `backend-installer.tsx`:
+- `https://github.com/your-username/personal-ai-agent/releases/latest/download/`
+- GitHub API calls to non-existent repository
+- No error handling for failed API calls
+
+**Status**: ✅ Fixed - Environment-based repository configuration implemented
+
+**Solution Implemented**:
+- **Environment Variables**: Added `NEXT_PUBLIC_GITHUB_REPO_OWNER` and `NEXT_PUBLIC_GITHUB_REPO_NAME`
+- **Dynamic URLs**: All GitHub links now use environment configuration
+- **Error Handling**: Comprehensive fallback UI when GitHub API fails
+- **Retry Mechanism**: Users can retry failed release fetches
+- **Manual Fallback**: Direct links to GitHub releases page when automated downloads fail
+
+**Technical Changes**:
+- `components/backend-installer.tsx` - Environment-based repository configuration
+- `.env.example` and `.env.local` - GitHub repository configuration  
+- Enhanced error states with user guidance and retry options
+- Updated to correct repository: `gitKnowsMe/PersonalAIAgent_backend`
+
+**Current Status**: ✅ Fixed - Repository `gitKnowsMe/PersonalAIAgent_backend` exists and is public but has no releases yet.
+**Next Steps**: Create first release tag (`v1.0.0`) to trigger CI/CD pipeline and publish executables.
+
+**Solution Implemented**:
+- **Smart Routing**: Added backend detection service with 3-second timeout optimization
+- **State Management**: Implemented three-state system (available/installed-not-running/not-installed)
+- **User Flow**: "Get Started" now checks backend status before routing to appropriate view
+- **Error Prevention**: Users are guided through installation process before attempting authentication
+- **Real-time Detection**: Added status monitoring with automatic updates when backend becomes available
+
+**UX Improvements**:
+- `components/backend-detection.tsx` - Fast backend status detection
+- `lib/app-routing.ts` - Centralized routing logic based on backend availability
+- `components/start-backend-guide.tsx` - Instructions when backend is installed but not running
+- `app.tsx` - View-based routing system replacing boolean state management
+
+**Result**: Eliminated connection errors and provided seamless installation guidance for new users.
 
 ### Development Rules (from .cursor/rules/python.mdc)
 - **Modular Architecture**: Code must be structured for testability and maintainability
