@@ -119,6 +119,7 @@ jobs:
         if: matrix.os == 'macos' && env.APPLE_CERTIFICATE
         working-directory: "Personal AI Agent/backend"
         env:
+          # Code signing secrets (optional - workflow skips if not configured)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -144,6 +145,7 @@ jobs:
         if: matrix.os == 'windows' && env.WINDOWS_CERTIFICATE
         working-directory: "Personal AI Agent/backend"
         env:
+          # Code signing secrets (optional - workflow skips if not configured)
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
@@ -305,6 +307,7 @@ jobs:
     steps:
       - name: Trigger frontend deployment
         run: |
+          # Notify Vercel frontend of new release (optional - skips if not configured)
           curl -X POST \
             -H "Authorization: token ${{ secrets.VERCEL_DEPLOY_HOOK }}" \
             -H "Content-Type: application/json" \
