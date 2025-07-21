@@ -68,9 +68,9 @@ RATE_LIMITS = {
     "/api/emails": "100/hour",
     "/api/emails/search": "100/hour",
     
-    # Health checks and status - more permissive
-    "/api/health-check": "1000/hour",
-    "/api/backend-status": "1000/hour",
+    # Health checks and status - very permissive for frontend detection
+    "/api/health-check": "10000/hour",  # Allow frequent health checks for backend detection
+    "/api/backend-status": "10000/hour",
     "/api/": "1000/hour",
 }
 
