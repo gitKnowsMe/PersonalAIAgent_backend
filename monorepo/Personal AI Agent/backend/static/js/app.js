@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDocuments();
         loadSources();
         loadQueries();
+        loadChatHistory(); // Load chat history on app load
     } else {
         console.log("No token found, showing login section");
         showLoginSection();
@@ -607,6 +608,11 @@ async function handleQuery(e) {
         
         // Reload queries to include the new one
         loadQueries();
+        
+        // Refresh chat history to show the new query
+        chatHistoryOffset = 0; // Reset offset for fresh load
+        hasMoreChatHistory = true;
+        await loadChatHistory(20, 0);
     } catch (error) {
         const errorTime = performance.now();
         const totalErrorTime = errorTime - startTime;
@@ -653,6 +659,136 @@ async function loadQueries() {
         }
     } catch (error) {
         console.error('Error loading queries:', error);
+    }
+}
+
+// Chat history functionality for legacy frontend
+let chatHistoryOffset = 0;
+let hasMoreChatHistory = true;
+
+async function loadChatHistory(limit = 20, offset = 0) {
+    try {
+        console.log(`Loading chat history: limit=${limit}, offset=${offset}`);
+        
+        const params = new URLSearchParams();
+        params.append('limit', limit.toString());
+        params.append('offset', offset.toString());
+        
+        const response = await fetch(`${API_URL}/queries?${params.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load chat history');
+        }
+        
+        const queries = await response.json();
+        console.log(`Loaded ${queries.length} chat history queries`);
+        
+        const chatHistoryContainer = document.getElementById('chat-history');
+        if (!chatHistoryContainer) {
+            console.warn('Chat history container not found');
+            return;
+        }
+        
+        if (offset === 0) {
+            // Initial load - clear existing content
+            chatHistoryContainer.innerHTML = '';
+        }
+        
+        if (queries.length === 0) {
+            if (offset === 0) {
+                chatHistoryContainer.innerHTML = '<p class="text-muted">No chat history yet. Start a conversation!</p>';
+            }
+            hasMoreChatHistory = false;
+            return;
+        }
+        
+        // Convert queries to chat messages and append to container
+        queries.reverse().forEach(query => { // Reverse to show oldest first
+            // User message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-message user-message mb-2';
+            userMsg.innerHTML = `
+                <div class="d-flex justify-content-end">
+                    <div class="bg-primary text-white p-2 rounded" style="max-width: 80%;">
+                        <small class="text-light">${new Date(query.created_at).toLocaleString()}</small>
+                        <div>${query.question}</div>
+                    </div>
+                </div>
+            `;
+            chatHistoryContainer.appendChild(userMsg);
+            
+            // Assistant message
+            if (query.answer) {
+                const assistantMsg = document.createElement('div');
+                assistantMsg.className = 'chat-message assistant-message mb-3';
+                assistantMsg.innerHTML = `
+                    <div class="d-flex justify-content-start">
+                        <div class="bg-light text-dark p-2 rounded" style="max-width: 80%;">
+                            <small class="text-muted">AI Assistant</small>
+                            <div>${query.answer}</div>
+                        </div>
+                    </div>
+                `;
+                chatHistoryContainer.appendChild(assistantMsg);
+            }
+        });
+        
+        chatHistoryOffset += queries.length;
+        hasMoreChatHistory = queries.length === limit;
+        
+        // Add "Load More" button if there's more history
+        updateLoadMoreButton();
+        
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        const chatHistoryContainer = document.getElementById('chat-history');
+        if (chatHistoryContainer && offset === 0) {
+            chatHistoryContainer.innerHTML = '<p class="text-danger">Failed to load chat history.</p>';
+        }
+    }
+}
+
+function updateLoadMoreButton() {
+    const chatHistoryContainer = document.getElementById('chat-history');
+    if (!chatHistoryContainer) return;
+    
+    // Remove existing load more button
+    const existingButton = chatHistoryContainer.querySelector('.load-more-history');
+    if (existingButton) {
+        existingButton.remove();
+    }
+    
+    // Add new load more button if there's more history
+    if (hasMoreChatHistory) {
+        const loadMoreBtn = document.createElement('div');
+        loadMoreBtn.className = 'load-more-history text-center mt-3';
+        loadMoreBtn.innerHTML = `
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadMoreChatHistory()">
+                Load More History
+            </button>
+        `;
+        chatHistoryContainer.appendChild(loadMoreBtn);
+    }
+}
+
+async function loadMoreChatHistory() {
+    if (!hasMoreChatHistory) return;
+    
+    const loadMoreBtn = document.querySelector('.load-more-history button');
+    if (loadMoreBtn) {
+        loadMoreBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Loading...';
+        loadMoreBtn.disabled = true;
+    }
+    
+    await loadChatHistory(20, chatHistoryOffset);
+    
+    if (loadMoreBtn) {
+        loadMoreBtn.innerHTML = 'Load More History';
+        loadMoreBtn.disabled = false;
     }
 }
 

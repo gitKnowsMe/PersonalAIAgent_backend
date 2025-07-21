@@ -11,7 +11,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.constants import DEFAULT_DESCRIPTION, OPENAPI_URL_SUFFIX
 from app.db.database import get_db, Base, engine
-from app.api.endpoints import auth, documents, queries, gmail, emails, sources, admin
+from app.api.endpoints import auth, documents, queries, gmail, emails, sources, admin, updates
 from app.middleware.rate_limiting import apply_rate_limits
 from app.middleware.session_monitoring import session_monitoring_middleware
 
@@ -127,6 +127,7 @@ app.include_router(documents.router, prefix=settings.API_V1_STR, tags=["document
 app.include_router(queries.router, prefix=settings.API_V1_STR, tags=["queries"])
 app.include_router(gmail.router, prefix=settings.API_V1_STR, tags=["gmail"])
 app.include_router(emails.router, prefix=settings.API_V1_STR, tags=["emails"])
+app.include_router(updates.router, prefix=settings.API_V1_STR, tags=["updates"])
 app.include_router(sources.router, prefix=settings.API_V1_STR, tags=["sources"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 

@@ -1,0 +1,326 @@
+name: Build Personal AI Agent Executables
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      include_models:
+        description: 'Include AI models in build (increases size to ~4GB)'
+        required: false
+        type: boolean
+        default: false
+      draft_release:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  build-matrix:
+    name: Build ${{ matrix.os }} executable
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            runner: windows-latest
+            artifact_name: PersonalAIAgent-windows
+            executable_ext: .exe
+            archive_format: zip
+          - os: macos
+            runner: macos-latest
+            artifact_name: PersonalAIAgent-macos
+            executable_ext: .app
+            archive_format: zip
+          - os: linux
+            runner: ubuntu-latest
+            artifact_name: PersonalAIAgent-linux
+            executable_ext: ""
+            archive_format: tar.gz
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: PersonalAIAgent_frontend/package-lock.json
+
+      - name: Get version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${{ github.ref_name }}
+          else
+            VERSION=${{ github.event.inputs.version }}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+        shell: bash
+
+      - name: Install backend dependencies
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Download models (if requested)
+        if: ${{ github.event.inputs.include_models == 'true' }}
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          echo "Downloading AI models..."
+          python download_model.py
+          python download_embedding_model.py
+          echo "Models downloaded successfully"
+
+      - name: Run build validation
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          echo "Running build validation..."
+          python test_executable_build.py
+
+      - name: Build executable
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          echo "Building executable for ${{ matrix.os }}..."
+          python build_executable.py --platform ${{ matrix.os }} ${{ github.event.inputs.include_models == 'true' && '--include-models' || '' }}
+
+      - name: Create installer package
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          echo "Creating installer package..."
+          python create_installer_package.py --platform ${{ matrix.os }} ${{ github.event.inputs.include_models == 'true' && '--include-models' || '' }}
+
+      - name: Code signing (macOS)
+        if: matrix.os == 'macos' && env.APPLE_CERTIFICATE
+        working-directory: "Personal AI Agent/backend"
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "Setting up code signing for macOS..."
+          # Create keychain
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          
+          # Import certificate
+          echo $APPLE_CERTIFICATE | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P $APPLE_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          
+          # Sign the application
+          codesign --force --sign "$APPLE_TEAM_ID" --options runtime dist/PersonalAIAgent.app
+          
+          # Notarize (optional, requires Apple Developer account)
+          # xcrun notarytool submit dist/PersonalAIAgent.app --apple-id ${{ secrets.APPLE_ID }} --password ${{ secrets.APPLE_PASSWORD }} --team-id $APPLE_TEAM_ID --wait
+
+      - name: Code signing (Windows)
+        if: matrix.os == 'windows' && env.WINDOWS_CERTIFICATE
+        working-directory: "Personal AI Agent/backend"
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "Setting up code signing for Windows..."
+          # Import certificate
+          $cert = [Convert]::FromBase64String("$env:WINDOWS_CERTIFICATE")
+          [IO.File]::WriteAllBytes("certificate.pfx", $cert)
+          
+          # Sign the executable
+          & 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe' sign /f certificate.pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 dist/PersonalAIAgent.exe
+
+      - name: Calculate checksums
+        working-directory: "Personal AI Agent/backend"
+        run: |
+          echo "Calculating checksums..."
+          if [ "${{ matrix.os }}" == "windows" ]; then
+            certutil -hashfile "PersonalAIAgent-${{ matrix.os }}-${{ github.event.inputs.include_models == 'true' && 'with-models' || 'no-models' }}.zip" SHA256 > checksums-${{ matrix.os }}.txt
+          else
+            shasum -a 256 "PersonalAIAgent-${{ matrix.os }}-${{ github.event.inputs.include_models == 'true' && 'with-models' || 'no-models' }}.${{ matrix.archive_format }}" > checksums-${{ matrix.os }}.txt
+          fi
+        shell: bash
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ steps.version.outputs.version }}
+          path: |
+            Personal AI Agent/backend/PersonalAIAgent-${{ matrix.os }}-*.zip
+            Personal AI Agent/backend/PersonalAIAgent-${{ matrix.os }}-*.tar.gz
+            Personal AI Agent/backend/checksums-${{ matrix.os }}.txt
+          retention-days: 30
+
+      - name: Upload to release (if tag push)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            Personal AI Agent/backend/PersonalAIAgent-${{ matrix.os }}-*.zip
+            Personal AI Agent/backend/PersonalAIAgent-${{ matrix.os }}-*.tar.gz
+            Personal AI Agent/backend/checksums-${{ matrix.os }}.txt
+          tag_name: ${{ steps.version.outputs.version }}
+          draft: ${{ github.event.inputs.draft_release == 'true' }}
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          # Personal AI Agent ${{ steps.version.outputs.version }}
+          
+          ## 🚀 Features
+          
+          - **Privacy-First AI**: All processing happens locally on your machine
+          - **PDF Document Processing**: Upload and query PDFs with intelligent categorization
+          - **Gmail Integration**: Search and analyze your emails with AI assistance
+          - **Local AI Model**: Mistral 7B for intelligent responses without external APIs
+          - **Cross-Platform**: Available for Windows, macOS, and Linux
+          
+          ## 📦 Downloads
+          
+          Choose the appropriate version for your platform:
+          
+          ### Standard Downloads (~100MB + ~4GB models downloaded separately)
+          - **Windows**: `PersonalAIAgent-windows-no-models.zip`
+          - **macOS**: `PersonalAIAgent-macos-no-models.zip`
+          - **Linux**: `PersonalAIAgent-linux-no-models.tar.gz`
+          
+          ${{ github.event.inputs.include_models == 'true' && '### Full Downloads (~4GB+ - includes all AI models)
+          - **Windows**: `PersonalAIAgent-windows-with-models.zip`
+          - **macOS**: `PersonalAIAgent-macos-with-models.zip`  
+          - **Linux**: `PersonalAIAgent-linux-with-models.tar.gz`' || '' }}
+          
+          ## 🛠️ Installation
+          
+          1. **Download** the appropriate package for your platform
+          2. **Extract** the archive to a directory of your choice
+          3. **Install**: Run `python install.py` to set up the environment
+          4. **Download Models** (if not included): Run `python download_models.py`
+          5. **Start**: Double-click the PersonalAIAgent executable
+          6. **Access**: Open http://localhost:8000 in your browser
+          
+          ## 📋 System Requirements
+          
+          - **RAM**: 8GB minimum, 16GB recommended
+          - **Storage**: 15GB free space (10GB for models, 5GB for application)
+          - **OS**: Windows 10+, macOS 10.14+, or Linux (64-bit)
+          - **Python**: 3.8+ (for installer and model downloader only)
+          
+          ## 🔒 Privacy & Security
+          
+          - All AI processing happens locally - no data sent to external services
+          - Your documents and emails stay on your machine
+          - SQLite database for single-user simplicity
+          - Gmail OAuth tokens stored locally only
+          
+          ## 🆘 Support
+          
+          - **Documentation**: See README.md in the download package
+          - **Issues**: Report bugs at https://github.com/${{ github.repository }}/issues
+          - **Logs**: Check logs/personal_ai_agent.log for troubleshooting
+          
+          ## 🔍 Verification
+          
+          SHA256 checksums are provided for all downloads. Verify file integrity:
+          
+          ```bash
+          # Windows
+          certutil -hashfile PersonalAIAgent-windows-*.zip SHA256
+          
+          # macOS/Linux  
+          shasum -a 256 PersonalAIAgent-*.*
+          ```
+          EOF
+          
+          echo "Generated release notes"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Personal AI Agent ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: ${{ github.event.inputs.draft_release == 'true' }}
+          prerelease: false
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-frontend:
+    name: Notify Frontend of New Release
+    needs: [build-matrix, create-release]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Trigger frontend deployment
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.VERCEL_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.ref }}", "version": "${{ github.ref_name }}"}' \
+            "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+          echo "Frontend deployment triggered for version ${{ github.ref_name }}"
+
+  cleanup:
+    name: Cleanup build artifacts
+    needs: [build-matrix, create-release]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Delete temporary artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: |
+            PersonalAIAgent-*
+          failOnError: false
