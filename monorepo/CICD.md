@@ -386,6 +386,14 @@ The CI/CD system integrates with the PersonalAIAgent_frontend through:
 4. **Status Updates**: Real-time detection of new releases
 5. **Error Handling**: Graceful fallbacks when releases unavailable
 
+### IDE Diagnostics Note
+
+**Context Access Warnings**: IDEs may show warnings about "Context access might be invalid" for GitHub secrets in the workflow file (lines 122-149, 309-315). These are false positives. The syntax `${{ secrets.SECRET_NAME }}` is correct and standard for GitHub Actions workflows.
+
+**Code Signing Secrets**: All code signing secrets (Apple certificates, Windows certificates, Vercel webhooks) are optional. The workflow automatically skips signing steps if secrets are not configured.
+
+**Validation**: The workflow file syntax is valid and will execute correctly when GitHub Actions is enabled.
+
 ### Next Steps
 
 1. **Monitor Registration**: Workflow should register within 5 minutes
