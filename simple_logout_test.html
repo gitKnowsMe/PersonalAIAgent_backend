@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Logout Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px; padding: 20px; border: 2px solid #ccc; }
+        .visible { display: block; }
+        .hidden { display: none; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Simple Logout Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testSectionSwitching()">Test Section Switching</button>
+        <button onclick="testTokenManagement()">Test Token Management</button>
+        <button onclick="testLogoutFunction()">Test Logout Function</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <!-- Simulate the same DOM structure as the main app -->
+    <div id="login-section" class="test-section visible">
+        <h2>Login Section</h2>
+        <p>This simulates the login section</p>
+        <button onclick="simulateLogin()">Simulate Login</button>
+    </div>
+    
+    <div id="register-section" class="test-section hidden">
+        <h2>Register Section</h2>
+        <p>This simulates the register section</p>
+    </div>
+    
+    <div id="app-section" class="test-section hidden">
+        <h2>App Section</h2>
+        <p>This simulates the app section</p>
+        <button id="logout-btn" onclick="simulateLogout()">Logout</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Simulate the same global variables
+        let token = localStorage.getItem('token');
+        let loginSection, registerSection, appSection;
+        
+        // Initialize DOM elements
+        function initDOMElements() {
+            loginSection = document.getElementById('login-section');
+            registerSection = document.getElementById('register-section');
+            appSection = document.getElementById('app-section');
+            
+            logResult('info', 'DOM Elements initialized: ' + JSON.stringify({
+                loginSection: loginSection ? 'found' : 'missing',
+                registerSection: registerSection ? 'found' : 'missing',
+                appSection: appSection ? 'found' : 'missing'
+            }));
+        }
+        
+        // Section switching functions (same as main app)
+        function showLoginSection() {
+            logResult('info', 'showLoginSection called');
+            
+            if (!loginSection || !registerSection || !appSection) {
+                logResult('error', 'DOM elements not initialized, attempting to initialize...');
+                initDOMElements();
+            }
+            
+            if (loginSection) {
+                loginSection.className = 'test-section visible';
+                logResult('success', 'Login section shown');
+            } else {
+                logResult('error', 'Login section element not found!');
+            }
+            
+            if (registerSection) {
+                registerSection.className = 'test-section hidden';
+            } else {
+                logResult('error', 'Register section element not found!');
+            }
+            
+            if (appSection) {
+                appSection.className = 'test-section hidden';
+            } else {
+                logResult('error', 'App section element not found!');
+            }
+        }
+        
+        function showAppSection() {
+            logResult('info', 'showAppSection called');
+            
+            if (!loginSection || !registerSection || !appSection) {
+                logResult('error', 'DOM elements not initialized, attempting to initialize...');
+                initDOMElements();
+            }
+            
+            if (loginSection) {
+                loginSection.className = 'test-section hidden';
+            } else {
+                logResult('error', 'Login section element not found!');
+            }
+            
+            if (registerSection) {
+                registerSection.className = 'test-section hidden';
+            } else {
+                logResult('error', 'Register section element not found!');
+            }
+            
+            if (appSection) {
+                appSection.className = 'test-section visible';
+                logResult('success', 'App section shown');
+            } else {
+                logResult('error', 'App section element not found!');
+            }
+        }
+        
+        // Logout function (same as main app)
+        function logout() {
+            logResult('info', 'logout function called');
+            
+            try {
+                // Log state before
+                logResult('info', 'State before logout: ' + JSON.stringify({
+                    token: token,
+                    tokenInStorage: localStorage.getItem('token'),
+                    loginVisible: loginSection ? loginSection.className : 'N/A',
+                    appVisible: appSection ? appSection.className : 'N/A'
+                }));
+                
+                // Remove token
+                localStorage.removeItem('token');
+                token = null;
+                
+                // Show login section
+                showLoginSection();
+                
+                // Log state after
+                logResult('info', 'State after logout: ' + JSON.stringify({
+                    token: token,
+                    tokenInStorage: localStorage.getItem('token'),
+                    loginVisible: loginSection ? loginSection.className : 'N/A',
+                    appVisible: appSection ? appSection.className : 'N/A'
+                }));
+                
+                logResult('success', 'Logout completed successfully');
+                return true;
+            } catch (error) {
+                logResult('error', 'Error during logout: ' + error.message);
+                return false;
+            }
+        }
+        
+        // Test functions
+        function testSectionSwitching() {
+            logResult('info', '=== Testing Section Switching ===');
+            
+            logResult('info', 'Step 1: Show login section');
+            showLoginSection();
+            
+            setTimeout(() => {
+                logResult('info', 'Step 2: Show app section');
+                showAppSection();
+                
+                setTimeout(() => {
+                    logResult('info', 'Step 3: Show login section again');
+                    showLoginSection();
+                    logResult('success', 'Section switching test completed');
+                }, 1000);
+            }, 1000);
+        }
+        
+        function testTokenManagement() {
+            logResult('info', '=== Testing Token Management ===');
+            
+            // Test setting token
+            localStorage.setItem('token', 'test-token-123');
+            token = 'test-token-123';
+            logResult('info', 'Token set to: ' + token);
+            
+            // Test removing token
+            localStorage.removeItem('token');
+            token = null;
+            logResult('info', 'Token removed, now: ' + token);
+            
+            logResult('success', 'Token management test completed');
+        }
+        
+        function testLogoutFunction() {
+            logResult('info', '=== Testing Logout Function ===');
+            
+            // Set up a test scenario
+            localStorage.setItem('token', 'test-token-456');
+            token = 'test-token-456';
+            showAppSection();
+            
+            setTimeout(() => {
+                logResult('info', 'Calling logout function...');
+                logout();
+                logResult('success', 'Logout function test completed');
+            }, 1000);
+        }
+        
+        function simulateLogin() {
+            logResult('info', 'Simulating login...');
+            localStorage.setItem('token', 'simulated-token-' + Date.now());
+            token = localStorage.getItem('token');
+            showAppSection();
+            logResult('success', 'Login simulated, token: ' + token);
+        }
+        
+        function simulateLogout() {
+            logResult('info', 'Simulating logout via button click...');
+            logout();
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function logResult(type, message) {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+            
+            // Also log to console
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            logResult('info', 'Page loaded, initializing...');
+            initDOMElements();
+            logResult('success', 'Test page ready');
+        });
+    </script>
+</body>
+</html>

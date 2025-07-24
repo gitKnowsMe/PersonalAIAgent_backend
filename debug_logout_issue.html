@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Logout Issue</title>
+    <script>
+        // This script will help us debug the logout issue
+        window.debugLogout = function() {
+            console.log("=== LOGOUT DEBUG ===");
+            
+            // Check if logout button exists
+            const logoutBtn = document.getElementById('logout-btn');
+            console.log("Logout button found:", logoutBtn);
+            
+            if (logoutBtn) {
+                console.log("Logout button display:", window.getComputedStyle(logoutBtn).display);
+                console.log("Logout button visibility:", window.getComputedStyle(logoutBtn).visibility);
+                console.log("Logout button parent:", logoutBtn.parentElement);
+                
+                // Check if button has click listeners
+                const events = getEventListeners ? getEventListeners(logoutBtn) : "getEventListeners not available";
+                console.log("Button events:", events);
+                
+                // Try to click it programmatically
+                console.log("Attempting programmatic click...");
+                logoutBtn.click();
+            }
+            
+            // Check if global logout function exists
+            console.log("Global logout function exists:", typeof window.logout);
+            if (typeof window.logout === 'function') {
+                console.log("Attempting to call global logout...");
+                try {
+                    window.logout();
+                    console.log("Global logout called successfully");
+                } catch (error) {
+                    console.error("Error calling global logout:", error);
+                }
+            }
+        };
+        
+        // Add debug button to page
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugBtn = document.createElement('button');
+            debugBtn.textContent = 'Debug Logout';
+            debugBtn.style.position = 'fixed';
+            debugBtn.style.top = '10px';
+            debugBtn.style.right = '10px';
+            debugBtn.style.zIndex = '9999';
+            debugBtn.style.background = 'red';
+            debugBtn.style.color = 'white';
+            debugBtn.style.padding = '10px';
+            debugBtn.style.border = 'none';
+            debugBtn.style.borderRadius = '5px';
+            debugBtn.onclick = window.debugLogout;
+            document.body.appendChild(debugBtn);
+        });
+    </script>
+</head>
+<body>
+    <h1>Debug Script Loaded</h1>
+    <p>This page adds a debug button to help troubleshoot logout issues.</p>
+    <p>The debug button will appear in the top-right corner when you visit the main app.</p>
+    <p>Click it to run logout diagnostics.</p>
+</body>
+</html>

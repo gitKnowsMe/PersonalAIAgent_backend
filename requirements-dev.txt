@@ -1,0 +1,45 @@
+# Personal AI Agent Backend - Development Requirements
+# Includes testing, linting, and development tools
+
+# Include production requirements
+-r requirements-prod.txt
+
+# ===== Testing =====
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+httpx-mock>=0.10.0
+
+# ===== Code Quality =====
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+pre-commit>=3.0.0
+
+# ===== Documentation =====
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocs-mermaid2-plugin>=1.0.0
+
+# ===== Development Utilities =====
+python-multipart>=0.0.6
+watchdog>=3.0.0
+ipython>=8.0.0
+jupyter>=1.0.0
+
+# ===== Database Development =====
+alembic>=1.12.0
+pgcli>=3.5.0
+
+# ===== Build Tools =====
+pyinstaller>=5.13.0
+setuptools>=68.0.0
+wheel>=0.41.0
+
+# ===== Additional Development Dependencies =====
+python-decouple>=3.8
+factory-boy>=3.3.0
+faker>=19.0.0
+freezegun>=1.2.0

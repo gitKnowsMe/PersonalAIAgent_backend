@@ -1,0 +1,61 @@
+# Personal AI Agent Backend - Production Requirements (Minimal)
+# Streamlined dependencies for production deployment
+
+# ===== Core Web Framework =====
+fastapi==0.115.12
+uvicorn==0.34.3
+python-multipart==0.0.20
+aiofiles==24.1.0
+
+# ===== Database & ORM =====
+sqlalchemy==2.0.41
+psycopg2-binary==2.9.10
+
+# ===== Authentication & Security =====
+python-jose==3.5.0
+passlib==1.7.4
+bcrypt==4.0.1
+cryptography==44.0.0
+
+# ===== Configuration =====
+pydantic==2.11.5
+pydantic-settings==2.10.1
+python-dotenv==1.1.0
+
+# ===== AI/ML Core =====
+llama_cpp_python==0.3.9
+sentence-transformers==4.1.0
+transformers==4.53.2
+torch==2.7.1
+faiss-cpu==1.11.0
+numpy==2.2.6
+
+# ===== LangChain =====
+langchain==0.3.26
+langchain-community==0.3.27
+langchain-core==0.3.69
+langchain-text-splitters==0.3.8
+
+# ===== Document Processing =====
+pypdf==5.6.1
+python-magic==0.4.27
+
+# ===== Google APIs (Gmail) =====
+google-api-python-client==2.155.0
+google-auth==2.36.0
+google-auth-oauthlib==1.2.1
+
+# ===== HTTP & Networking =====
+httpx==0.28.1
+requests==2.32.4
+aiohttp==3.12.14
+
+# ===== Email Processing =====
+html2text==2024.2.26
+email_validator==2.2.0
+
+# ===== Utilities =====
+diskcache==5.6.3
+PyYAML==6.0.2
+orjson==3.11.0
+click==8.2.1

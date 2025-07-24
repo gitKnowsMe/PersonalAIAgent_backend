@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout Test</title>
+</head>
+<body>
+    <h1>Logout Test</h1>
+    <button id="test-logout" onclick="testLogout()">Test Logout Function</button>
+    <div id="result"></div>
+
+    <script>
+        async function testLogout() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Test if logout function exists
+                if (typeof window.logout === 'function') {
+                    resultDiv.innerHTML = '<p style="color: green;">✅ Logout function exists and is callable</p>';
+                    
+                    // Test logout API endpoint
+                    const response = await fetch('/api/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        resultDiv.innerHTML += '<p style="color: green;">✅ Logout API endpoint works: ' + data.message + '</p>';
+                    } else {
+                        resultDiv.innerHTML += '<p style="color: red;">❌ Logout API endpoint failed</p>';
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ Logout function not found</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
