@@ -165,7 +165,7 @@ python start_backend.py
 4. Deploy using Docker or VPS hosting
 
 ### Frontend Integration
-This backend is designed to work with the [Personal AI Agent Frontend](https://github.com/gitKnowsMe/personal-ai-agent-frontend):
+This backend is designed to work with the [Personal AI Agent Frontend](https://github.com/gitKnowsMe/PersonalAIAgent_frontend):
 - Frontend deployed on Vercel (public)
 - Backend runs locally (private)
 - Automatic backend detection and installation
