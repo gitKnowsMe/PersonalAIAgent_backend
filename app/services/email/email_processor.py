@@ -29,177 +29,93 @@ class EmailProcessor:
         self.html_converter.ignore_links = True
         self.html_converter.ignore_images = True
         
-        # Enhanced email classification patterns (from legacy processor)
-        self.classification_patterns = {
-            "business": {
-                "keywords": [
-                    "meeting", "project", "deadline", "team", "client", "proposal",
-                    "contract", "budget", "revenue", "quarterly", "annual", "report",
-                    "presentation", "conference", "call", "agenda", "action items",
-                    "follow up", "deliverable", "milestone", "stakeholder", "roi",
-                    "kpi", "metrics", "analysis", "strategy", "implementation"
-                ],
-                "patterns": [
-                    r'\b(meeting|conference|call)\s+(scheduled|planned|rescheduled)',
-                    r'\b(project|task|deliverable)\s+(update|status|completion)',
-                    r'\b(deadline|due\s+date|timeline)',
-                    r'\b(quarterly|annual|monthly)\s+(report|review|meeting)',
-                    r'\b(action\s+items|next\s+steps|follow\s+up)',
-                    r'\b(budget|cost|expense|revenue|profit)',
-                ],
-                "sender_patterns": [
-                    r'@(company|corp|inc|ltd|llc)',
-                    r'noreply|no-reply|donotreply'
-                ]
-            },
-            "personal": {
-                "keywords": [
-                    "family", "friend", "personal", "vacation", "holiday", "party",
-                    "birthday", "anniversary", "wedding", "dinner", "lunch", "coffee",
-                    "weekend", "home", "kids", "children", "spouse", "partner",
-                    "photos", "pictures", "memories", "trip", "travel", "visit"
-                ],
-                "patterns": [
-                    r'\b(family|friends?)\s+(gathering|reunion|visit)',
-                    r'\b(vacation|holiday|trip)\s+(plans?|photos?)',
-                    r'\b(birthday|anniversary|wedding)',
-                    r'\b(dinner|lunch|coffee|drinks?)\s+(tonight|tomorrow|weekend)',
-                    r'\b(home|house|apartment)',
-                    r'\b(kids?|children|baby|toddler)',
-                ],
-                "sender_patterns": [
-                    r'@(gmail|yahoo|hotmail|outlook|icloud|aol)',
-                ]
-            },
-            "promotional": {
-                "keywords": [
-                    "sale", "discount", "offer", "deal", "promotion", "coupon",
-                    "limited time", "exclusive", "special", "save", "% off",
-                    "free shipping", "newsletter", "unsubscribe", "marketing",
-                    "advertisement", "promo", "clearance", "black friday",
-                    "cyber monday", "holiday sale", "end of season"
-                ],
-                "patterns": [
-                    r'\b(\d+%?)\s+(off|discount|savings?)',
-                    r'\b(sale|deal|offer|promotion)\s+(ends?|expires?)',
-                    r'\b(limited\s+time|exclusive|special)\s+(offer|deal)',
-                    r'\b(free\s+shipping|no\s+cost\s+delivery)',
-                    r'\b(unsubscribe|opt\s+out|manage\s+preferences)',
-                    r'\$\d+\.\d{2}\s+(was|originally|retail)',
-                ],
-                "sender_patterns": [
-                    r'@(marketing|promo|offers|deals|sales)',
-                    r'noreply|no-reply|newsletter|marketing'
-                ]
-            },
-            "transactional": {
-                "keywords": [
-                    "receipt", "order", "confirmation", "invoice", "payment",
-                    "transaction", "purchase", "shipped", "delivered", "tracking",
-                    "refund", "return", "exchange", "subscription", "billing",
-                    "account", "statement", "balance", "due", "overdue"
-                ],
-                "patterns": [
-                    r'\b(order|transaction|purchase)\s+(#?\d+|confirmation)',
-                    r'\b(receipt|invoice)\s+(for|#)',
-                    r'\b(payment|billing)\s+(confirmation|receipt|due)',
-                    r'\b(shipped|delivered|tracking)\s+(#?\d+|number)',
-                    r'\b(refund|return|exchange)\s+(processed|approved)',
-                    r'\b(subscription|membership)\s+(renewal|expiring|expired)',
-                    r'\$\d+\.\d{2}\s+(charged|paid|due|owed)',
-                ],
-                "sender_patterns": [
-                    r'@(payments|billing|orders|transactions)',
-                    r'noreply|no-reply|automated|system'
-                ]
-            },
-            "support": {
-                "keywords": [
-                    "support", "help", "assistance", "issue", "problem", "bug",
-                    "error", "trouble", "ticket", "case", "inquiry", "question",
-                    "resolution", "solution", "fix", "troubleshooting", "guide",
-                    "documentation", "tutorial", "faq", "knowledge base"
-                ],
-                "patterns": [
-                    r'\b(support|help)\s+(ticket|case|request)',
-                    r'\b(issue|problem|bug)\s+(#?\d+|reported)',
-                    r'\b(troubleshooting|resolution|solution)',
-                    r'\b(knowledge\s+base|faq|documentation)',
-                    r'\b(inquiry|question)\s+(about|regarding)',
-                    r'\b(technical|customer)\s+(support|service)',
-                ],
-                "sender_patterns": [
-                    r'@(support|help|service|customer)',
-                    r'support|help|service|customer'
-                ]
-            }
-        }
+        # User-specific chunking preferences (can be customized per user)
+        self.user_preferences = {}
         
-        # Enhanced chunking configurations per email type (from legacy processor)
-        self.chunk_configs = {
-            'business': {
+        # Default chunking strategy optimized for payment receipts and important emails
+        self.default_payment_patterns = [
+            r'\$[0-9]+\.?[0-9]*',  # Dollar amounts
+            r'venmo|paypal|cashapp|zelle|apple pay|google pay',  # Payment apps
+            r'receipt|confirmation|transaction|payment|invoice',  # Transaction terms
+            r'you (sent|paid|received|charged)',  # Payment actions
+        ]
+        
+        # User-customizable chunking configurations
+        self.base_chunk_configs = {
+            'payment_receipt': {
+                'chunk_size': 300,
+                'overlap': 50,
+                'min_chunk_size': 20,  # Very low for short receipts
+                'strategy': 'preserve_payments',
+                'description': 'Payment receipts with transaction data preservation'
+            },
+            'short_email': {
+                'chunk_size': 250,
+                'overlap': 30,
+                'min_chunk_size': 30,
+                'strategy': 'minimal',
+                'description': 'Short emails with minimal processing'
+            },
+            'medium_email': {
+                'chunk_size': 500,
+                'overlap': 75,
+                'min_chunk_size': 50,
+                'strategy': 'balanced',
+                'description': 'Medium emails with balanced chunking'
+            },
+            'long_email': {
                 'chunk_size': 800,
                 'overlap': 100,
-                'min_chunk_size': 150,
-                'strategy': 'thread_aware',
-                'description': 'Business emails with thread context preservation'
-            },
-            'personal': {
-                'chunk_size': 600,
-                'overlap': 75,
                 'min_chunk_size': 100,
-                'strategy': 'conversation_chunks',
-                'description': 'Personal emails with relationship context'
-            },
-            'promotional': {
-                'chunk_size': 500,
-                'overlap': 50,
-                'min_chunk_size': 100,
-                'strategy': 'content_focused',
-                'description': 'Promotional emails with offer extraction'
-            },
-            'transactional': {
-                'chunk_size': 400,
-                'overlap': 40,
-                'min_chunk_size': 80,
-                'strategy': 'data_extraction',
-                'description': 'Transactional emails with precise data matching'
-            },
-            'support': {
-                'chunk_size': 700,
-                'overlap': 100,
-                'min_chunk_size': 120,
-                'strategy': 'issue_focused',
-                'description': 'Support emails with solution tracking'
+                'strategy': 'comprehensive',
+                'description': 'Long emails with comprehensive context'
             },
             'default': {
                 'chunk_size': 400,
                 'overlap': 50,
-                'min_chunk_size': 100,
-                'strategy': 'balanced',
-                'description': 'Generic emails with balanced processing'
-            },
-            # Legacy compatibility
-            'short_email': {  # < 500 chars
-                'chunk_size': 200,
-                'overlap': 25,
-                'min_chunk_size': 50,
-                'strategy': 'balanced'
-            },
-            'long_email': {  # > 2000 chars
-                'chunk_size': 600,
-                'overlap': 100,
-                'min_chunk_size': 150,
-                'strategy': 'balanced'
-            },
-            'generic': {
-                'chunk_size': 400,
-                'overlap': 50,
-                'min_chunk_size': 100,
-                'strategy': 'balanced',
-                'description': 'Generic emails with balanced processing'
+                'min_chunk_size': 30,  # Lowered from 100
+                'strategy': 'adaptive',
+                'description': 'Adaptive processing based on content'
             }
         }
+    
+    def get_user_chunking_config(self, user_id: int) -> Dict:
+        """Get user-specific chunking configuration."""
+        if user_id in self.user_preferences:
+            user_config = self.user_preferences[user_id]
+            base_config = self.base_chunk_configs.get(user_config.get('strategy', 'default'), self.base_chunk_configs['default'])
+            # Merge user preferences with base config
+            config = base_config.copy()
+            config.update(user_config)
+            return config
+        return self.base_chunk_configs['default']
+    
+    def set_user_chunking_preferences(self, user_id: int, preferences: Dict):
+        """Set user-specific chunking preferences."""
+        self.user_preferences[user_id] = preferences
+        logger.info(f"Updated chunking preferences for user {user_id}: {preferences}")
+    
+    def detect_email_type(self, email_data: Dict) -> str:
+        """Detect email type based on content patterns (simplified)."""
+        content = ' '.join([
+            email_data.get('subject', ''),
+            email_data.get('body_text', ''),
+            email_data.get('sender', '')
+        ]).lower()
+        
+        # Check for payment patterns
+        for pattern in self.default_payment_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                return 'payment_receipt'
+        
+        # Check email length
+        text_length = len(email_data.get('body_text', '') + email_data.get('body_html', ''))
+        if text_length < 500:
+            return 'short_email'
+        elif text_length > 2000:
+            return 'long_email'
+        else:
+            return 'medium_email'
     
     async def process_email(self, email_data: Dict, user_id: int, classification_tags: List[str] = None) -> List[Dict]:
         """
@@ -217,17 +133,25 @@ class EmailProcessor:
             # Convert HTML to text if needed
             processed_text = await self._prepare_text_content(email_data)
             
-            # Enhance classification tags with sophisticated patterns
-            enhanced_tags = await self._enhance_classification_tags(email_data, classification_tags)
+            # Detect email type based on content patterns
+            email_type = self.detect_email_type(email_data)
             
-            # Determine email type for optimal chunking strategy
-            email_type = self._determine_email_type(enhanced_tags)
+            # Get user-specific chunking configuration
+            chunk_config = self.get_user_chunking_config(user_id)
+            
+            # Override config based on detected email type
+            if email_type in self.base_chunk_configs:
+                type_config = self.base_chunk_configs[email_type].copy()
+                # Merge user preferences with type-specific config
+                if user_id in self.user_preferences:
+                    type_config.update(self.user_preferences[user_id])
+                chunk_config = type_config
             
             # Generate email-specific metadata
-            metadata = await self._create_email_metadata(email_data, user_id, enhanced_tags, email_type)
+            metadata = await self._create_email_metadata(email_data, user_id, email_type)
             
-            # Chunk the email content using type-specific strategy
-            chunks = await self._chunk_email_content_advanced(processed_text, email_data, email_type)
+            # Chunk the email content using user-specific strategy
+            chunks = await self._chunk_email_content_user_aware(processed_text, email_data, chunk_config)
             
             # Generate embeddings for each chunk
             processed_chunks = []
@@ -249,7 +173,8 @@ class EmailProcessor:
                         'chunk_length': len(chunk_text),
                         'chunk_word_count': len(chunk_text.split()),
                         'email_type': email_type,
-                        'chunking_strategy': self.chunk_configs.get(email_type, self.chunk_configs['default']).get('strategy', 'balanced')
+                        'chunking_strategy': chunk_config.get('strategy', 'adaptive'),
+                        'user_id': user_id
                     }
                     
                     # Add additional metadata from advanced chunking
@@ -267,7 +192,7 @@ class EmailProcessor:
                     # Continue processing other chunks even if one fails
                     continue
             
-            logger.info(f"Processed email '{metadata['subject'][:50]}...' ({email_type}) into {len(processed_chunks)} chunks")
+            logger.info(f"User {user_id}: Processed email '{metadata['subject'][:50]}...' ({email_type}) into {len(processed_chunks)} chunks using {chunk_config.get('strategy', 'adaptive')} strategy")
             return processed_chunks
             
         except VectorStoreError:
@@ -324,8 +249,33 @@ class EmailProcessor:
         for pattern in footer_patterns:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
         
-        # Remove URLs (keep them but shorten)
+        # Preserve payment URLs, shorten others
+        # First protect payment-related URLs
+        payment_url_patterns = [
+            r'venmo\.com[^\s]*',
+            r'paypal\.com[^\s]*', 
+            r'cashapp\.[^\s]*',
+            r'zelle\.[^\s]*'
+        ]
+        
+        protected_urls = []
+        for i, pattern in enumerate(payment_url_patterns):
+            matches = re.findall(f'https?://{pattern}', text, re.IGNORECASE)
+            for match in matches:
+                placeholder = f'[PAYMENT_URL_{i}]'
+                text = text.replace(match, placeholder)
+                protected_urls.append((placeholder, match))
+        
+        # Remove other URLs
         text = re.sub(r'https?://[^\s]+', '[URL]', text)
+        
+        # Restore payment URLs with simplified format
+        for placeholder, original_url in protected_urls:
+            domain = re.search(r'https?://([^/]+)', original_url)
+            if domain:
+                text = text.replace(placeholder, f'[{domain.group(1)}]')
+            else:
+                text = text.replace(placeholder, '[PAYMENT_URL]')
         
         # Clean up extra whitespace again
         text = re.sub(r'\n\s*\n\s*\n+', '\n\n', text)
@@ -508,29 +458,165 @@ class EmailProcessor:
         
         return 'default'
     
-    async def _chunk_email_content_advanced(self, text: str, email_data: Dict, email_type: str) -> List[Dict]:
-        """Advanced email content chunking using type-specific strategies."""
+    async def _chunk_email_content_user_aware(self, text: str, email_data: Dict, chunk_config: Dict) -> List[Dict]:
+        """User-aware email content chunking with payment preservation."""
         if not text:
             return []
         
-        # Get configuration for email type
-        config = self.chunk_configs.get(email_type, self.chunk_configs['default'])
-        strategy = config.get('strategy', 'balanced')
+        strategy = chunk_config.get('strategy', 'adaptive')
         
-        # Apply chunking strategy
-        if strategy == 'thread_aware':
-            return self._create_thread_aware_chunks(text, email_data, config)
-        elif strategy == 'conversation_chunks':
-            return self._create_conversation_chunks(text, email_data, config)
-        elif strategy == 'content_focused':
-            return self._create_content_focused_chunks(text, email_data, config)
-        elif strategy == 'data_extraction':
-            return self._create_data_extraction_chunks(text, email_data, config)
-        elif strategy == 'issue_focused':
-            return self._create_issue_focused_chunks(text, email_data, config)
+        # Apply chunking strategy based on user preferences
+        if strategy == 'preserve_payments':
+            return self._create_payment_aware_chunks(text, email_data, chunk_config)
+        elif strategy == 'minimal':
+            return self._create_minimal_chunks(text, email_data, chunk_config)
+        elif strategy == 'comprehensive':
+            return self._create_comprehensive_chunks(text, email_data, chunk_config)
         else:
-            # Balanced strategy (default)
-            return self._create_balanced_chunks(text, email_data, config)
+            # Adaptive strategy (default)
+            return self._create_adaptive_chunks(text, email_data, chunk_config)
+    
+    def _create_payment_aware_chunks(self, content: str, email_data: Dict, config: Dict) -> List[Dict]:
+        """Create chunks optimized for payment receipt preservation."""
+        chunks = []
+        
+        # Enhanced patterns that include dollar amounts
+        payment_patterns = self.default_payment_patterns + [
+            r'\$[0-9]+\.?[0-9]*',  # Dollar amounts like $9.99
+            r'[0-9]+\.?[0-9]*\s*USD',  # USD amounts
+            r'total|subtotal|amount|cost|price|fee',  # Amount-related words
+        ]
+        
+        # For payment emails, use paragraph-based chunking but keep payment context together
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+        
+        if not paragraphs:
+            # Fallback to line-based if no paragraphs
+            paragraphs = [line.strip() for line in content.split('\n') if line.strip()]
+        
+        current_chunk = ""
+        chunk_index = 0
+        
+        for para in paragraphs:
+            # Check if this paragraph contains payment info
+            has_payment_info = any(re.search(pattern, para, re.IGNORECASE) for pattern in payment_patterns)
+            
+            # Calculate potential chunk size
+            potential_chunk_size = len(current_chunk) + len(para) + 2  # +2 for newlines
+            
+            # Decide whether to start a new chunk
+            should_start_new_chunk = (
+                potential_chunk_size > config['chunk_size'] and 
+                current_chunk and 
+                len(current_chunk.strip()) >= config.get('min_chunk_size', 20)
+            )
+            
+            if should_start_new_chunk:
+                # Save current chunk
+                chunk_has_payment = any(re.search(pattern, current_chunk, re.IGNORECASE) for pattern in payment_patterns)
+                chunks.append({
+                    "content": current_chunk.strip(),
+                    "metadata": {
+                        "chunk_index": chunk_index,
+                        "chunk_type": "payment_transaction" if chunk_has_payment else "payment_context",
+                        "contains_payment": chunk_has_payment
+                    }
+                })
+                chunk_index += 1
+                
+                # Start new chunk with current paragraph
+                current_chunk = para
+            else:
+                # Add to current chunk
+                current_chunk += "\n\n" + para if current_chunk else para
+        
+        # Add final chunk
+        if current_chunk.strip() and len(current_chunk.strip()) >= config.get('min_chunk_size', 20):
+            chunk_has_payment = any(re.search(pattern, current_chunk, re.IGNORECASE) for pattern in payment_patterns)
+            chunks.append({
+                "content": current_chunk.strip(),
+                "metadata": {
+                    "chunk_index": chunk_index,
+                    "chunk_type": "payment_transaction" if chunk_has_payment else "payment_context",
+                    "contains_payment": chunk_has_payment
+                }
+            })
+        
+        return chunks
+    
+    def _create_minimal_chunks(self, content: str, email_data: Dict, config: Dict) -> List[Dict]:
+        """Create minimal chunks for short emails."""
+        # For very short emails, create one chunk if it meets minimum size
+        if len(content.strip()) >= config.get('min_chunk_size', 30):
+            return [{
+                "content": content.strip(),
+                "metadata": {
+                    "chunk_index": 0,
+                    "chunk_type": "minimal_complete"
+                }
+            }]
+        return []
+    
+    def _create_comprehensive_chunks(self, content: str, email_data: Dict, config: Dict) -> List[Dict]:
+        """Create comprehensive chunks for long emails with more context."""
+        return self._create_adaptive_chunks(content, email_data, config)
+    
+    def _create_adaptive_chunks(self, content: str, email_data: Dict, config: Dict) -> List[Dict]:
+        """Create adaptive chunks based on content structure."""
+        chunks = []
+        chunk_size = config['chunk_size']
+        overlap = config.get('overlap', 50)
+        min_chunk_size = config.get('min_chunk_size', 30)
+        
+        # Try paragraph-based chunking first
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+        
+        if len(paragraphs) > 1:
+            # Multi-paragraph email
+            current_chunk = ""
+            chunk_index = 0
+            
+            for para in paragraphs:
+                if len(current_chunk) + len(para) > chunk_size and current_chunk:
+                    if len(current_chunk.strip()) >= min_chunk_size:
+                        chunks.append({
+                            "content": current_chunk.strip(),
+                            "metadata": {
+                                "chunk_index": chunk_index,
+                                "chunk_type": "adaptive_paragraph"
+                            }
+                        })
+                        chunk_index += 1
+                    
+                    # Start new chunk with overlap
+                    if overlap > 0 and current_chunk:
+                        current_chunk = current_chunk[-overlap:] + "\n\n" + para
+                    else:
+                        current_chunk = para
+                else:
+                    current_chunk += "\n\n" + para if current_chunk else para
+            
+            # Add final chunk
+            if current_chunk.strip() and len(current_chunk.strip()) >= min_chunk_size:
+                chunks.append({
+                    "content": current_chunk.strip(),
+                    "metadata": {
+                        "chunk_index": chunk_index,
+                        "chunk_type": "adaptive_paragraph"
+                    }
+                })
+        else:
+            # Single paragraph or short email
+            if len(content.strip()) >= min_chunk_size:
+                chunks.append({
+                    "content": content.strip(),
+                    "metadata": {
+                        "chunk_index": 0,
+                        "chunk_type": "adaptive_single"
+                    }
+                })
+        
+        return chunks
     
     def _create_thread_aware_chunks(self, content: str, email_data: Dict, config: Dict) -> List[Dict]:
         """Create chunks that preserve business thread context."""

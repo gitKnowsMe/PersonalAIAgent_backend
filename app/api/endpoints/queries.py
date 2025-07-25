@@ -221,34 +221,80 @@ async def ask_question(
         # Check for email prioritization keywords
         query_lower = query.question.lower().strip()
         email_prioritization_keywords = [
-            # Current keywords
-            "check emails", "search emails", "find emails", "look in emails", 
-            "email search", "inbox search", "check my emails", "search my inbox",
-            "check email", "find email", "look in email",
+            # Primary email action keywords (highest priority)
+            "check email", "check emails", "see inbox", "verify email", "verify emails",
+            "check my email", "check my emails", "look at email", "look at emails",
+            "see my inbox", "view inbox", "open inbox", "check inbox messages",
             
-            # Enhanced natural variations
+            # Search-focused keywords
+            "search emails", "find emails", "look in emails", "email search", 
+            "inbox search", "search my inbox", "search inbox",
+            
+            # Navigation and access keywords
             "in my emails", "from emails", "email about", "emails for",
-            "check inbox", "search inbox", "look in inbox",
-            "my gmail", "gmail search", "email messages",
+            "look in inbox", "check inbox", "browse emails", "review emails",
+            "my gmail", "gmail search", "email messages", "inbox messages",
             
             # Question patterns
-            "did I get an email", "any emails about", "email from",
-            "emails containing", "emails with"
-        ]
-        prioritize_emails = any(keyword in query_lower for keyword in email_prioritization_keywords)
-        logger.info(f"DEBUG: Query='{query_lower}', Keywords={email_prioritization_keywords}")
-        logger.info(f"🔍 DEBUG: Prioritize emails={prioritize_emails}")
-        if prioritize_emails:
-            matching_keyword = next(keyword for keyword in email_prioritization_keywords if keyword in query_lower)
-            logger.info(f"🔍 DEBUG: Query contains '{matching_keyword}' - PRIORITIZING EMAIL SEARCH for user {current_user.id}")
+            "did I get an email", "any emails about", "email from", "emails from",
+            "emails containing", "emails with", "show me emails", "find email",
             
-            # CRITICAL FIX: Override source parameters for EMAIL-ONLY search when email prioritization is detected
-            logger.info(f"🔍 DEBUG: EMAIL PRIORITIZATION DETECTED - forcing email-only search")
-            logger.info(f"🔍 DEBUG: Before override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            # Verification and confirmation patterns
+            "verify in email", "confirm in email", "check if email", "see if email",
+            "email confirmation", "email verification", 
+            
+            # Invoice and receipt patterns (strong email indicators)
+            "email receipt", "email invoice", "receipt from", "invoice from",
+            "apple invoice", "apple receipt", "venmo receipt", "paypal receipt",
+            "payment receipt", "transaction receipt"
+        ]
+        
+        # Also check for financial patterns that typically come via email
+        financial_email_patterns = [
+            "invoice", "receipt", "transaction", "payment confirmation",
+            "order confirmation", "purchase confirmation", "billing statement"
+        ]
+        
+        # Check if query contains financial terms that are likely email-based
+        contains_financial_terms = any(pattern in query_lower for pattern in financial_email_patterns)
+        
+        # Additional email signals for Apple receipts specifically  
+        apple_email_signals = "apple" in query_lower and any(term in query_lower for term in ["invoice", "receipt", "purchase", "payment", "bill"])
+        
+        # Combine all email prioritization signals
+        prioritize_emails = (
+            any(keyword in query_lower for keyword in email_prioritization_keywords) or
+            contains_financial_terms or 
+            apple_email_signals
+        )
+        
+        logger.info(f"📧 EMAIL PRIORITIZATION CHECK for query: '{query_lower}'")
+        logger.info(f"📧 Contains financial terms: {contains_financial_terms}")
+        logger.info(f"📧 Apple email signals: {apple_email_signals}")
+        logger.info(f"📧 Keyword match: {any(keyword in query_lower for keyword in email_prioritization_keywords)}")
+        logger.info(f"🔍 FINAL DECISION - Prioritize emails: {prioritize_emails}")
+        if prioritize_emails:
+            # Determine the reason for email prioritization
+            matching_signals = []
+            if any(keyword in query_lower for keyword in email_prioritization_keywords):
+                matching_keyword = next(keyword for keyword in email_prioritization_keywords if keyword in query_lower)
+                matching_signals.append(f"keyword: '{matching_keyword}'")
+            if contains_financial_terms:
+                matching_financial = next(pattern for pattern in financial_email_patterns if pattern in query_lower)
+                matching_signals.append(f"financial: '{matching_financial}'")
+            if apple_email_signals:
+                matching_signals.append("apple receipt pattern")
+            
+            logger.info(f"🎯 EMAIL PRIORITIZATION ACTIVATED for user {current_user.id}")
+            logger.info(f"🎯 Reason: {', '.join(matching_signals)}")
+            
+            # CRITICAL: Force EMAIL-ONLY search when email prioritization is detected
+            logger.info(f"🚨 FORCING EMAIL-ONLY SEARCH (PDFs will be ignored)")
+            logger.info(f"   Before: search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
             source_params['search_emails'] = True
-            source_params['search_documents'] = False  # ⭐ KEY ADDITION
-            logger.info(f"🔍 DEBUG: After override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
-            logger.info(f"🔍 DEBUG: CRITICAL CHECK - source_params after override: {source_params}")
+            source_params['search_documents'] = False  # ⭐ KEY: This prevents PDF fallback
+            logger.info(f"   After: search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            logger.info(f"✅ EMAIL PRIORITIZATION SETUP COMPLETE")
         else:
             logger.info(f"🔍 DEBUG: No email prioritization keywords found in query for user {current_user.id}")
         

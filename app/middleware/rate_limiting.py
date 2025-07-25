@@ -41,7 +41,7 @@ def get_client_identifier(request: Request) -> str:
 # Configure rate limiter with different limits for different endpoints
 limiter = Limiter(
     key_func=get_client_identifier,
-    default_limits=["100/hour", "20/minute"]  # Conservative defaults
+    default_limits=["1000/hour", "100/minute"]  # More permissive defaults
 )
 
 
@@ -69,8 +69,8 @@ RATE_LIMITS = {
     "/api/emails/search": "100/hour",
     
     # Health checks and status - very permissive for frontend detection
-    "/api/health-check": "10000/hour",  # Allow frequent health checks for backend detection
-    "/api/backend-status": "10000/hour",
+    "/api/health-check": "500/minute",  # Allow very frequent health checks for backend detection
+    "/api/backend-status": "500/minute",
     "/api/": "1000/hour",
 }
 

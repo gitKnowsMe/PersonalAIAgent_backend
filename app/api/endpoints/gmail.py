@@ -4,7 +4,7 @@ Gmail API endpoints for OAuth2 authentication and email management
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -608,6 +608,106 @@ async def get_emails(
         )
 
 
+@router.post("/chunking-preferences")
+async def set_chunking_preferences(
+    preferences: Dict,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Set user-specific email chunking preferences
+    
+    Example preferences:
+    {
+        "strategy": "preserve_payments",  # or "minimal", "comprehensive", "adaptive"
+        "chunk_size": 400,
+        "min_chunk_size": 20,
+        "overlap": 50
+    }
+    """
+    try:
+        # Update processor preferences
+        email_processor.set_user_chunking_preferences(current_user.id, preferences)
+        
+        logger.info(f"Updated chunking preferences for user {current_user.id}: {preferences}")
+        
+        return {
+            "success": True,
+            "message": "Chunking preferences updated successfully",
+            "preferences": preferences
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating chunking preferences for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update chunking preferences"
+        )
+
+
+@router.get("/chunking-preferences")
+async def get_chunking_preferences(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get user's current email chunking preferences
+    """
+    try:
+        preferences = email_processor.get_user_chunking_config(current_user.id)
+        
+        return {
+            "success": True,
+            "preferences": preferences
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting chunking preferences for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get chunking preferences"
+        )
+
+
+@router.post("/reprocess-emails")
+async def reprocess_emails(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Reprocess all emails with updated chunking preferences
+    """
+    try:
+        # Get all emails for user
+        emails = db.query(Email).filter(
+            Email.user_id == current_user.id
+        ).all()
+        
+        # Reset vector namespaces to trigger reprocessing
+        for email in emails:
+            email.vector_namespace = None
+        
+        db.commit()
+        
+        # Trigger background reprocessing
+        import asyncio
+        task = asyncio.create_task(_process_synced_emails(1, current_user.id))  # Use first email account
+        task.add_done_callback(lambda t: logger.error(f"Reprocessing task failed: {t.exception()}") if t.exception() else None)
+        
+        logger.info(f"Started reprocessing {len(emails)} emails for user {current_user.id}")
+        
+        return {
+            "success": True,
+            "message": f"Started reprocessing {len(emails)} emails with new preferences",
+            "email_count": len(emails)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error reprocessing emails for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start email reprocessing"
+        )
+
+
 @router.post("/search", response_model=EmailSearchResponse)
 async def search_emails(
     request: EmailSearchRequest,
@@ -708,23 +808,11 @@ async def _process_synced_emails(email_account_id: int, user_id: int):
                         'attachments': []  # We'll handle attachments later
                     }
                     
-                    # Classify email using our classifier
-                    classification_tags = email_classifier.classify_email(email_data)
+                    # Simplified email type detection (no classification needed)
+                    email.email_type = 'email'  # Simplified - all emails are just 'email'
                     
-                    # Update email type based on classification
-                    if 'receipt' in classification_tags:
-                        email.email_type = 'transactional'
-                    elif 'work' in classification_tags:
-                        email.email_type = 'business'
-                    elif 'personal' in classification_tags:
-                        email.email_type = 'personal'
-                    elif 'promotional' in classification_tags:
-                        email.email_type = 'promotional'
-                    else:
-                        email.email_type = 'generic'
-                    
-                    # Process email content for vector storage
-                    processed_chunks = await email_processor.process_email(email_data, email.user_id, classification_tags)
+                    # Process email content for vector storage with user-aware chunking
+                    processed_chunks = await email_processor.process_email(email_data, email.user_id)
                     
                     if processed_chunks:
                         # Generate unique email ID for storage
