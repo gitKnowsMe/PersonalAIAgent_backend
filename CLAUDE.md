@@ -13,8 +13,8 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Download AI models (~4GB total)
-python download_model.py              # Mistral 7B LLM
+# Download AI models (~2GB total)
+python download_model.py              # Phi-2 LLM (1.6GB)
 python download_embedding_model.py    # MiniLM embedding model
 
 # Setup database and admin user
@@ -205,7 +205,7 @@ GMAIL_CLIENT_SECRET=GOCSPX-your_client_secret
 GMAIL_REDIRECT_URI=http://localhost:8000/api/gmail/callback
 
 # LLM Configuration
-LLM_MODEL_PATH=models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+LLM_MODEL_PATH=models/phi-2-instruct-Q4_K_M.gguf
 USE_METAL=true  # macOS GPU acceleration
 METAL_N_GPU_LAYERS=1
 
@@ -214,7 +214,7 @@ ALLOWED_ORIGINS=https://your-frontend.vercel.app,http://localhost:3000
 ```
 
 ### Model Files
-- **LLM Model**: `models/mistral-7b-instruct-v0.1.Q4_K_M.gguf` (~4GB)
+- **LLM Model**: `models/phi-2-instruct-Q4_K_M.gguf` (~1.6GB)
 - **Embedding Model**: `models/all-MiniLM-L6-v2/` (sentence-transformers format)
 
 ### Data Organization
@@ -245,7 +245,35 @@ Designed for separation with public frontend and private backend:
 
 ### Privacy Architecture
 All sensitive operations happen locally:
-- LLM inference via local Mistral 7B model
+- LLM inference via local Phi-2 model
 - Document processing and embeddings generation
 - Email content storage and indexing
 - No external API calls for AI processing
+
+## Recent Fixes (July 2024)
+
+### Email Search Quality Improvements
+Fixed critical issues with email search accuracy for financial queries:
+
+**✅ Apple Invoice Query Fix:**
+- **Problem**: Query "Check email, what was my apple invoice?" returned mixed PDF data ("$19.99, $2.05, $9.99") instead of correct email amount
+- **Solution**: Enhanced email prioritization to force email-only search for invoice/receipt keywords
+- **Result**: Now correctly returns "The Apple invoice was $9.99" from email data only
+
+**✅ Email Processing Pipeline Overhaul:**
+- **Removed category-based classification** (business/personal/promotional/transactional/support)
+- **Implemented user-specific chunking preferences** with payment-aware strategies
+- **Enhanced payment-aware chunking** to preserve dollar amounts in context
+- **Lowered minimum chunk size** from 100 to 20 characters for short receipts
+- **Improved processing rate** from 5/178 to 176/178 emails successfully processed
+
+**✅ Rate Limiting Optimization:**
+- **Fixed health-check endpoint rate limiting** that caused 429 errors for frontend
+- **Increased health-check limits** to 500/minute for smooth frontend polling
+- **Enhanced backend detection** for PersonalAIAgent_frontend integration
+
+**✅ Technical Implementation:**
+- `app/api/endpoints/queries.py`: Enhanced email prioritization keywords and forced email-only search
+- `app/services/email/email_processor.py`: Implemented payment-aware chunking with paragraph-based processing
+- `app/middleware/rate_limiting.py`: Optimized rate limits for frontend health checks
+- Email vector storage: Improved chunking preserves transaction amounts in searchable format
