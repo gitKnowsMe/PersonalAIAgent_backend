@@ -1,4 +1,4 @@
-name: Build and Release Personal AI Agent
+name: Build and Release Personal AI Agent (macOS)
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   PYTHON_VERSION: '3.11'
   
 jobs:
-  build-macos:
+  build-and-release-macos:
     runs-on: macos-latest
     
     steps:
@@ -37,141 +37,35 @@ jobs:
         
     - name: Build macOS app bundle and DMG
       run: |
-        echo "Building Personal AI Agent for macOS..."
+        echo "🚀 Building Personal AI Agent Enhanced DMG for macOS..."
         python build_executable.py --platform darwin --dmg
         
     - name: Verify build artifacts
       run: |
+        echo "📋 Verifying build artifacts..."
         ls -la dist/
         # Verify app bundle exists
         if [ ! -d "dist/Personal AI Agent.app" ]; then
-          echo "Error: App bundle not created"
+          echo "❌ Error: App bundle not created"
           exit 1
         fi
+        echo "✅ App bundle created successfully"
+        
         # Verify DMG exists  
         if [ ! -f "dist/Personal AI Agent Installer.dmg" ]; then
-          echo "Error: DMG not created"
+          echo "❌ Error: DMG not created"
           exit 1
         fi
+        echo "✅ DMG created successfully"
         
     - name: Create ZIP archive for compatibility
       run: |
         cd dist
+        echo "📦 Creating ZIP archive for compatibility..."
         # Create ZIP version for backward compatibility
         zip -r "PersonalAIAgent-macos-no-models.zip" "Personal AI Agent.app" "README.md" "install.py"
+        echo "✅ ZIP archive created"
         ls -la *.zip *.dmg
-        
-    - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-build
-        path: |
-          dist/Personal AI Agent Installer.dmg
-          dist/PersonalAIAgent-macos-no-models.zip
-          dist/README.md
-        retention-days: 90
-          
-  build-windows:
-    runs-on: windows-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller pillow
-        
-    - name: Build Windows executable
-      run: |
-        echo "Building Personal AI Agent for Windows..."
-        python build_executable.py --platform windows
-        
-    - name: Create Windows installer package
-      run: |
-        cd dist
-        # Create ZIP package for Windows
-        7z a "PersonalAIAgent-windows-no-models.zip" "PersonalAIAgent.exe" "README.md" "install.py"
-        dir *.zip *.exe
-        
-    - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-build
-        path: |
-          dist/PersonalAIAgent-windows-no-models.zip
-          dist/README.md
-        retention-days: 90
-          
-  build-linux:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libjpeg-dev libpng-dev
-        
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller pillow
-        
-    - name: Build Linux executable
-      run: |
-        echo "Building Personal AI Agent for Linux..."
-        python build_executable.py --platform linux
-        
-    - name: Create Linux package
-      run: |
-        cd dist
-        # Create tar.gz package for Linux
-        tar -czf "PersonalAIAgent-linux-no-models.tar.gz" "PersonalAIAgent" "README.md" "install.py"
-        ls -la *.tar.gz
-        
-    - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-build
-        path: |
-          dist/PersonalAIAgent-linux-no-models.tar.gz
-          dist/README.md
-        retention-days: 90
-          
-  create-release:
-    needs: [build-macos, build-windows, build-linux]
-    runs-on: ubuntu-latest
-    if: success()
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        merge-multiple: true
-        
-    - name: Display structure of downloaded files
-      run: |
-        find . -type f -name "*.dmg" -o -name "*.zip" -o -name "*.tar.gz" | head -10
-        ls -la
         
     - name: Get release version
       id: version
@@ -181,6 +75,7 @@ jobs:
         else
           echo "VERSION=v$(date +'%Y.%m.%d')-dev" >> $GITHUB_OUTPUT
         fi
+        echo "Release version: ${{ steps.version.outputs.VERSION }}"
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -188,53 +83,43 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.version.outputs.VERSION }}
-        name: Personal AI Agent ${{ steps.version.outputs.VERSION }}
+        name: Personal AI Agent ${{ steps.version.outputs.VERSION }} (macOS)
         body: |
-          # Personal AI Agent ${{ steps.version.outputs.VERSION }}
+          # Personal AI Agent ${{ steps.version.outputs.VERSION }} - macOS Release
           
-          ## 🚀 What's New
-          - **Enhanced macOS Experience**: Professional .app bundle with DMG installer
-          - **First-Run Setup**: Guided setup with progressive Phi-2 model download (~1.7GB)
-          - **Complete Privacy**: All AI processing happens locally on your device
-          - **Cross-Platform**: Support for macOS, Windows, and Linux
+          ## 🍎 Enhanced macOS Experience
+          - **Professional .app bundle** with proper macOS integration
+          - **DMG installer** with drag-and-drop interface
+          - **First-run setup** with guided Phi-2 model download (~1.7GB)
+          - **Complete privacy** - all AI processing happens locally
+          - **Native macOS dialogs** and proper app directory structure
           
           ## 📦 Downloads
           
-          ### macOS (Recommended)
-          - **Personal AI Agent Installer.dmg** - Professional macOS installer with drag-and-drop interface
+          ### macOS (Only Platform Supported)
+          - **Personal AI Agent Installer.dmg** - Professional macOS installer (Recommended)
           - **PersonalAIAgent-macos-no-models.zip** - ZIP version for compatibility
-          
-          ### Windows
-          - **PersonalAIAgent-windows-no-models.zip** - Windows executable package
-          
-          ### Linux  
-          - **PersonalAIAgent-linux-no-models.tar.gz** - Linux executable package
           
           ## 🛠️ Installation
           
-          ### macOS
+          ### Enhanced DMG Installation (Recommended)
           1. Download `Personal AI Agent Installer.dmg`
           2. Double-click to mount the installer
           3. Drag "Personal AI Agent.app" to Applications folder
-          4. Launch from Applications - first run will download Phi-2 model (~1.7GB)
-          5. Browser opens automatically to http://localhost:8000
+          4. Launch from Applications
+          5. First run will show native setup dialog and download Phi-2 model (~1.7GB)
+          6. Browser opens automatically to http://localhost:8000
           
-          ### Windows
-          1. Download and extract `PersonalAIAgent-windows-no-models.zip`
+          ### ZIP Installation (Alternative)
+          1. Download and extract `PersonalAIAgent-macos-no-models.zip`
           2. Run `install.py` to setup environment
-          3. Double-click `PersonalAIAgent.exe` to start
-          4. First run downloads AI models automatically
-          
-          ### Linux
-          1. Download and extract `PersonalAIAgent-linux-no-models.tar.gz`
-          2. Run `./install.py` to setup environment  
-          3. Execute `./PersonalAIAgent` to start
+          3. Double-click "Personal AI Agent.app" to start
           4. First run downloads AI models automatically
           
           ## ⚙️ System Requirements
-          - **macOS**: 10.14+ (Intel/Apple Silicon), 8GB RAM, 15GB free space
-          - **Windows**: Windows 10+, 8GB RAM, 15GB free space
-          - **Linux**: Ubuntu 20.04+/equivalent, 8GB RAM, 15GB free space
+          - **macOS**: 10.14+ (Intel/Apple Silicon)
+          - **RAM**: 8GB minimum, 16GB recommended
+          - **Storage**: 15GB free space (for models and data)
           
           ## 🔒 Privacy & Security
           - All AI processing happens locally using Phi-2 model
@@ -242,14 +127,21 @@ jobs:
           - Your documents and emails stay on your device
           - Optional Gmail integration (OAuth2, local caching only)
           
+          ## 🚀 What's Included
+          - Enhanced macOS .app bundle with proper Info.plist
+          - Professional DMG with custom layout and Quick Start Guide
+          - Progressive Phi-2 model download system
+          - Native first-run experience with macOS dialogs
+          - Automatic browser opening after setup
+          
           ---
+          
+          **Platform Focus**: This release supports macOS only. Windows and Linux support planned for Q2 2025.
           
           **Full Changelog**: https://github.com/gitKnowsMe/PersonalAIAgent_backend/commits/${{ steps.version.outputs.VERSION }}
         draft: false
         prerelease: false
         files: |
-          Personal AI Agent Installer.dmg
-          PersonalAIAgent-macos-no-models.zip
-          PersonalAIAgent-windows-no-models.zip
-          PersonalAIAgent-linux-no-models.tar.gz
-          README.md
+          dist/Personal AI Agent Installer.dmg
+          dist/PersonalAIAgent-macos-no-models.zip
+          dist/README.md
