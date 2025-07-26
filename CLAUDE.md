@@ -13,9 +13,9 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Download AI models (~2GB total)
-python download_model.py              # Phi-2 LLM (1.6GB)
-python download_embedding_model.py    # MiniLM embedding model
+# Download AI models (~1.7GB total)
+python download_model.py              # Phi-2 LLM (~1.6GB)
+python download_embedding_model.py    # MiniLM embedding model (~100MB)
 
 # Setup database and admin user
 python setup_db.py
@@ -95,7 +95,7 @@ git push origin v1.0.0
 ### Core Application Structure
 The application is a **privacy-first AI backend** built with FastAPI that provides local LLM processing, document analysis, and Gmail integration. Key architectural principles:
 
-- **Local-First**: All AI processing happens locally using Mistral 7B
+- **Local-First**: All AI processing happens locally using Phi-2
 - **Category-Aware Processing**: Documents classified and processed with optimized strategies
 - **Hybrid Database**: PostgreSQL for development, SQLite for portable executables
 - **CORS-Enabled**: Designed to work with separate frontend deployments
@@ -155,7 +155,7 @@ The application is a **privacy-first AI backend** built with FastAPI that provid
 ### LLM Integration
 
 **Local Processing** (`app/utils/llm.py`):
-- Mistral 7B with llama-cpp-python
+- Phi-2 with llama-cpp-python (~1.7GB model)
 - Metal acceleration on macOS (configurable GPU layers)
 - Context-aware response generation
 - No external API dependencies
@@ -180,15 +180,15 @@ The application is a **privacy-first AI backend** built with FastAPI that provid
 ### Executable Build System
 
 **PyInstaller Configuration** (`build_executable.py`):
-- Single-file executable generation
+- Single-file executable generation with .app bundle for macOS
 - Progressive model downloading (separates binaries from AI models)
-- Platform-specific optimizations (Windows/macOS/Linux)
+- **Current focus**: macOS-only distribution (Windows/Linux planned for Q2 2025)
 - Static file inclusion and dependency bundling
 
 **CI/CD Pipeline** (`.github/workflows/build-executables.yml`):
-- Matrix builds for all platforms
+- macOS .app bundle builds (primary focus)
 - Automated release creation
-- Asset uploading with platform-specific naming
+- Asset uploading with macOS-specific naming
 
 ## Key Configuration
 
@@ -245,7 +245,7 @@ Designed for separation with public frontend and private backend:
 
 ### Privacy Architecture
 All sensitive operations happen locally:
-- LLM inference via local Phi-2 model
+- LLM inference via local Phi-2 model (~1.7GB)
 - Document processing and embeddings generation
 - Email content storage and indexing
 - No external API calls for AI processing

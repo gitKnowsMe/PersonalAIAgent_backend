@@ -4,15 +4,15 @@ A powerful, privacy-first AI backend built with FastAPI that provides local LLM 
 
 [![Built with FastAPI](https://img.shields.io/badge/Built%20with-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![LLM Powered](https://img.shields.io/badge/LLM-Mistral%207B-FF6B6B?style=for-the-badge)](https://mistral.ai/)
+[![LLM Powered](https://img.shields.io/badge/LLM-Phi--2-FF6B6B?style=for-the-badge)](https://huggingface.co/microsoft/phi-2)
 
 ## Features
 
-- 🧠 **Local LLM Processing** - Mistral 7B with Metal acceleration on macOS
+- 🧠 **Local LLM Processing** - Phi-2 LLM (~1.7GB) with Metal acceleration on macOS
 - 📄 **Advanced PDF Processing** - Category-aware document classification and chunking
 - 📧 **Gmail OAuth2 Integration** - Secure email access and thread-aware processing
 - 🔍 **Vector Search** - FAISS-based semantic similarity search
-- 🖥️ **Cross-Platform Executables** - Windows, macOS, and Linux binaries
+- 🖥️ **macOS .app Bundle** - Native macOS application (Windows/Linux support coming Q2 2025)
 - 🗄️ **Flexible Database** - PostgreSQL for dev, SQLite for portability  
 - 🔐 **JWT Authentication** - Secure API access with token-based auth
 - 🚀 **CI/CD Pipeline** - Automated builds via GitHub Actions
@@ -20,11 +20,11 @@ A powerful, privacy-first AI backend built with FastAPI that provides local LLM 
 
 ## Quick Start
 
-### Option 1: Download Executable (Recommended)
+### Option 1: Download macOS App (Recommended)
 1. Visit [Releases](https://github.com/gitKnowsMe/PersonalAIAgent_backend/releases)
-2. Download for your platform: `PersonalAIAgent-{platform}-no-models.zip`
-3. Extract and run the installer
-4. Models will download automatically on first run
+2. Download `PersonalAIAgent-macos.app` for macOS
+3. Double-click to install and start the backend
+4. Phi-2 model (~1.7GB) downloads automatically on first run
 
 ### Option 2: Development Setup
 ```bash
@@ -39,9 +39,9 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Download AI models (~4GB)
-python download_model.py
-python download_embedding_model.py
+# Download AI models (~1.7GB)
+python download_model.py              # Phi-2 model (~1.6GB)
+python download_embedding_model.py    # MiniLM embedding model
 
 # Setup database
 python setup_db.py
@@ -57,7 +57,7 @@ python start_backend.py
 
 ### Core Components
 - **FastAPI Application** - RESTful API with automatic OpenAPI docs
-- **Local LLM** - Mistral 7B with llama-cpp-python for inference
+- **Local LLM** - Phi-2 with llama-cpp-python for inference
 - **Vector Database** - FAISS for semantic document/email search
 - **Document Processing** - Category-specific PDF processing pipeline
 - **Email Integration** - Gmail OAuth2 with thread-aware processing
@@ -105,7 +105,7 @@ GMAIL_CLIENT_SECRET=GOCSPX-your_client_secret
 GMAIL_REDIRECT_URI=http://localhost:8000/api/gmail/callback
 
 # LLM Configuration
-LLM_MODEL_PATH=models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+LLM_MODEL_PATH=models/phi-2-instruct-Q4_K_M.gguf
 USE_METAL=true  # macOS acceleration
 METAL_N_GPU_LAYERS=1
 
@@ -182,7 +182,7 @@ This backend is designed to work with the [Personal AI Agent Frontend](https://g
 
 - **Minimum**: 8GB RAM, 15GB free disk space
 - **Recommended**: 16GB RAM, SSD storage
-- **Platforms**: Windows 10+, macOS 10.14+, Linux 64-bit
+- **Platforms**: macOS 10.14+ (Intel/Apple Silicon) - Windows/Linux support coming Q2 2025
 - **Optional**: GPU for accelerated inference (Metal on macOS)
 
 ## Contributing
