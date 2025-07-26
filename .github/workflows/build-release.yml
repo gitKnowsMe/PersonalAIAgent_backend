@@ -57,15 +57,15 @@ jobs:
         # Install remaining lighter dependencies
         pip install --timeout 300 --retries 3 -r requirements.txt
         
-    - name: Build macOS app bundle and DMG
+    - name: Build macOS source bundle and DMG
       run: |
         echo "🚀 Building Personal AI Agent Enhanced DMG for macOS..."
         echo "Python version: $(python --version)"
         echo "Current directory: $(pwd)"
         echo "Available files:"
         ls -la
-        echo "Starting build process..."
-        python build_executable.py --platform darwin --dmg
+        echo "Creating source bundle (more reliable than PyInstaller)..."
+        python create_source_bundle.py
         echo "Build completed. Checking outputs..."
         
     - name: Verify build artifacts
