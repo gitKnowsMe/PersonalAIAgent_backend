@@ -22,6 +22,7 @@ import platform
 from pathlib import Path
 import json
 import logging
+import plistlib
 from typing import List, Dict, Any
 
 # Setup logging
@@ -29,10 +30,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class ExecutableBuilder:
-    def __init__(self, include_models=False, target_platform=None, debug=False):
+    def __init__(self, include_models=False, target_platform=None, debug=False, create_dmg=False):
         self.include_models = include_models
         self.target_platform = target_platform or platform.system().lower()
         self.debug = debug
+        self.create_dmg = create_dmg
         self.base_dir = Path(__file__).parent
         self.build_dir = self.base_dir / "build"
         self.dist_dir = self.base_dir / "dist"
@@ -290,7 +292,7 @@ app_description = "Personal AI Agent - Privacy-first AI assistant with local pro
 
 # Source files
 source_dir = Path.cwd()
-main_script = source_dir / "startup_portable.py"
+main_script = source_dir / "startup_enhanced.py"
 
 # Hidden imports
 hiddenimports = {hidden_imports!r}
@@ -369,21 +371,46 @@ exe = EXE(
     **exe_kwargs
 )
 
-# macOS App Bundle (optional)
+# macOS App Bundle
 if sys.platform == "darwin":
     app = BUNDLE(
         exe,
-        name=f'{{app_name}}.app',
+        name='Personal AI Agent.app',
         icon=None,
-        bundle_identifier=f'com.personalaiagent.{{app_name.lower()}}',
+        bundle_identifier='com.personalaiagent.backend',
         version=app_version,
         info_plist={{
-            'CFBundleDisplayName': app_name,
-            'CFBundleIdentifier': f'com.personalaiagent.{{app_name.lower()}}',
+            'CFBundleDisplayName': 'Personal AI Agent',
+            'CFBundleName': 'Personal AI Agent',
+            'CFBundleIdentifier': 'com.personalaiagent.backend',
             'CFBundleVersion': app_version,
             'CFBundleShortVersionString': app_version,
+            'CFBundleExecutable': app_name,
+            'CFBundleIconFile': 'app_icon',
+            'CFBundleInfoDictionaryVersion': '6.0',
+            'CFBundlePackageType': 'APPL',
+            'CFBundleSignature': 'PAIA',
             'NSHighResolutionCapable': True,
             'LSApplicationCategoryType': 'public.app-category.productivity',
+            'LSMinimumSystemVersion': '10.14.0',
+            'NSRequiresAquaSystemAppearance': False,
+            'NSSupportsAutomaticTermination': True,
+            'NSSupportsSuddenTermination': True,
+            'NSHumanReadableCopyright': '© 2024 Personal AI Agent. All rights reserved.',
+            'LSEnvironment': {{
+                'PORTABLE_MODE': 'true',
+                'PYTHONHOME': '',
+                'PYTHONPATH': ''
+            }},
+            'NSAppTransportSecurity': {{
+                'NSAllowsArbitraryLoads': False,
+                'NSExceptionDomains': {{
+                    'localhost': {{
+                        'NSExceptionAllowsInsecureHTTPLoads': True,
+                        'NSExceptionMinimumTLSVersion': '1.0'
+                    }}
+                }}
+            }}
         }},
     )
 '''
@@ -419,9 +446,6 @@ if sys.platform == "darwin":
             "--noconfirm",
             "--clean",
         ]
-        
-        if self.debug:
-            cmd.append("--debug=all")
         
         logger.info(f"Running: {' '.join(cmd)}")
         
@@ -495,7 +519,7 @@ def setup_environment():
     
     if not env_file.exists():
         # Create basic .env for portable mode
-        env_content = '''# Personal AI Agent - Portable Configuration
+        env_content = """# Personal AI Agent - Portable Configuration
 PORTABLE_MODE=true
 DATABASE_URL=sqlite:///data/personal_ai_agent_portable.db
 HOST=localhost
@@ -504,7 +528,7 @@ DEBUG=false
 SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
 API_V1_STR=/api
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-LLM_MODEL_PATH=models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+LLM_MODEL_PATH=models/phi-2-instruct-Q4_K_M.gguf
 USE_METAL=true
 METAL_N_GPU_LAYERS=1
 
@@ -512,7 +536,7 @@ METAL_N_GPU_LAYERS=1
 GMAIL_CLIENT_ID=your-gmail-client-id.googleusercontent.com
 GMAIL_CLIENT_SECRET=your-gmail-client-secret
 GMAIL_REDIRECT_URI=http://localhost:8000/api/gmail/callback
-'''
+"""
         with open(env_file, 'w') as f:
             f.write(env_content)
         logger.info("Created .env file for portable mode")
@@ -524,16 +548,16 @@ def download_models():
     models_dir = Path("models")
     models_dir.mkdir(exist_ok=True)
     
-    model_file = models_dir / "mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+    model_file = models_dir / "phi-2-instruct-Q4_K_M.gguf"
     
     if not model_file.exists():
-        logger.info("Downloading Mistral 7B model (this may take several minutes)...")
+        logger.info("Downloading Phi-2 model (this may take several minutes)...")
         # In a real implementation, this would download the model
         # For now, just create a placeholder
         logger.warning("Model download not implemented in this installer")
         logger.info("Please run 'python download_model.py' separately to download models")
     else:
-        logger.info("Mistral model already exists")
+        logger.info("Phi-2 model already exists")
 
 def setup_database():
     """Set up SQLite database for portable mode."""
@@ -614,7 +638,7 @@ A privacy-first AI assistant with local processing capabilities.
 - 🔒 **Privacy-First**: All AI processing happens locally
 - 📄 **PDF Processing**: Upload and query PDF documents
 - 📧 **Gmail Integration**: Search and query your emails
-- 🤖 **Local AI**: Mistral 7B model for intelligent responses
+- 🤖 **Local AI**: Phi-2 model for intelligent responses
 - 🔍 **Vector Search**: Semantic search across documents and emails
 - 🌐 **Web Interface**: Built-in web interface at http://localhost:8000
 
@@ -640,7 +664,7 @@ HOST=localhost
 PORT=8000
 
 # Model configuration
-LLM_MODEL_PATH=models/mistral-7b-instral-v0.1.Q4_K_M.gguf
+LLM_MODEL_PATH=models/phi-2-instruct-Q4_K_M.gguf
 USE_METAL=true  # Enable on macOS for better performance
 ```
 
@@ -689,7 +713,7 @@ For issues and support:
 
 This application processes all data locally:
 - No data sent to external AI services
-- Local Mistral 7B model for AI processing
+- Local Phi-2 model for AI processing
 - SQLite database stored locally
 - Gmail data cached locally when synced
 
@@ -703,6 +727,322 @@ Build Date: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             f.write(readme_content)
         
         logger.info(f"Created README: {readme_path}")
+    
+    def create_macos_app_bundle(self):
+        """Create proper macOS app bundle structure with enhanced configuration."""
+        if self.target_platform != 'darwin':
+            return True
+            
+        logger.info("Creating enhanced macOS .app bundle...")
+        
+        app_name = "Personal AI Agent"
+        app_bundle_name = f"{app_name}.app"
+        app_path = self.dist_dir / app_bundle_name
+        
+        # Check if PyInstaller already created a bundle
+        if app_path.exists():
+            logger.info(f"Using existing app bundle: {app_path}")
+        else:
+            # Create app bundle structure manually if needed
+            logger.info("Creating app bundle structure...")
+            contents_dir = app_path / "Contents"
+            macos_dir = contents_dir / "MacOS"
+            resources_dir = contents_dir / "Resources"
+            
+            # Create directories
+            for directory in [contents_dir, macos_dir, resources_dir]:
+                directory.mkdir(parents=True, exist_ok=True)
+            
+            # Move executable to MacOS directory
+            exe_path = self.dist_dir / "PersonalAIAgent"
+            if exe_path.exists():
+                shutil.move(str(exe_path), str(macos_dir / "PersonalAIAgent"))
+                # Make executable
+                os.chmod(macos_dir / "PersonalAIAgent", 0o755)
+        
+        # Enhance Info.plist with comprehensive metadata
+        contents_dir = app_path / "Contents"
+        info_plist_path = contents_dir / "Info.plist"
+        
+        try:
+            from app.core.config import settings
+            version = getattr(settings, 'VERSION', '1.0.0')
+        except:
+            version = '1.0.0'
+        
+        # Enhanced Info.plist configuration
+        info_plist = {
+            'CFBundleDisplayName': app_name,
+            'CFBundleName': app_name,
+            'CFBundleIdentifier': 'com.personalaiagent.backend',
+            'CFBundleVersion': version,
+            'CFBundleShortVersionString': version,
+            'CFBundleExecutable': 'PersonalAIAgent',
+            'CFBundleIconFile': 'app_icon',
+            'CFBundleInfoDictionaryVersion': '6.0',
+            'CFBundlePackageType': 'APPL',
+            'CFBundleSignature': 'PAIA',
+            'NSHighResolutionCapable': True,
+            'LSApplicationCategoryType': 'public.app-category.productivity',
+            'LSMinimumSystemVersion': '10.14.0',
+            'NSRequiresAquaSystemAppearance': False,  # Dark mode support
+            'NSSupportsAutomaticTermination': True,
+            'NSSupportsSuddenTermination': True,
+            'NSHumanReadableCopyright': f'© 2024 Personal AI Agent. All rights reserved.',
+            'CFBundleDocumentTypes': [
+                {
+                    'CFBundleTypeExtensions': ['pdf'],
+                    'CFBundleTypeName': 'PDF Document',
+                    'CFBundleTypeRole': 'Viewer',
+                    'LSHandlerRank': 'Alternate'
+                }
+            ],
+            'LSEnvironment': {
+                'PORTABLE_MODE': 'true',
+                'PYTHONHOME': '',
+                'PYTHONPATH': ''
+            },
+            'NSAppTransportSecurity': {
+                'NSAllowsArbitraryLoads': False,
+                'NSExceptionDomains': {
+                    'localhost': {
+                        'NSExceptionAllowsInsecureHTTPLoads': True,
+                        'NSExceptionMinimumTLSVersion': '1.0'
+                    }
+                }
+            }
+        }
+        
+        # Write enhanced Info.plist
+        with open(info_plist_path, 'wb') as f:
+            plistlib.dump(info_plist, f)
+        
+        logger.info(f"Enhanced macOS app bundle created: {app_path}")
+        return True
+    
+    def create_dmg_resources(self):
+        """Create resources for professional DMG creation."""
+        if self.target_platform != 'darwin':
+            return True
+            
+        logger.info("Creating DMG resources...")
+        
+        # Create resources directory
+        resources_dir = self.base_dir / "dmg_resources"
+        resources_dir.mkdir(exist_ok=True)
+        
+        # Create DMG background (placeholder - would need actual design)
+        background_script = '''#!/bin/bash
+# Create a simple gradient background for DMG
+# In production, this would be a professionally designed PNG
+convert -size 800x400 gradient:#1a1a1a-#2d2d2d "dmg_background.png" 2>/dev/null || {
+    # Fallback: create a simple colored background
+    python3 -c "
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+# Create background image
+img = Image.new('RGB', (800, 400), '#1a1a1a')
+draw = ImageDraw.Draw(img)
+
+# Add gradient effect (simple)
+for y in range(400):
+    color_value = int(26 + (45-26) * (y/400))  # Gradient from #1a1a1a to #2d2d2d
+    color = f'#{color_value:02x}{color_value:02x}{color_value:02x}'
+    draw.line([(0, y), (800, y)], fill=color)
+
+# Add title text
+try:
+    # Try to use a nice font
+    font = ImageFont.truetype('/System/Library/Fonts/SF-Pro-Display-Bold.otf', 36)
+except:
+    # Fallback to default
+    font = ImageFont.load_default()
+
+text = 'Personal AI Agent'
+bbox = draw.textbbox((0, 0), text, font=font)
+text_width = bbox[2] - bbox[0]
+text_height = bbox[3] - bbox[1]
+text_x = (800 - text_width) // 2
+text_y = 50
+
+draw.text((text_x, text_y), text, fill='#ffffff', font=font)
+
+# Add subtitle
+try:
+    subtitle_font = ImageFont.truetype('/System/Library/Fonts/SF-Pro-Display-Regular.otf', 18)
+except:
+    subtitle_font = ImageFont.load_default()
+
+subtitle = 'Privacy-first AI assistant with local processing'
+bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
+subtitle_width = bbox[2] - bbox[0]
+subtitle_x = (800 - subtitle_width) // 2
+subtitle_y = text_y + text_height + 10
+
+draw.text((subtitle_x, subtitle_y), subtitle, fill='#cccccc', font=subtitle_font)
+
+# Add installation instructions
+instruction = 'Drag the app to Applications folder to install'
+bbox = draw.textbbox((0, 0), instruction, font=subtitle_font)
+inst_width = bbox[2] - bbox[0]
+inst_x = (800 - inst_width) // 2
+inst_y = 320
+
+draw.text((inst_x, inst_y), instruction, fill='#888888', font=subtitle_font)
+
+img.save('dmg_background.png')
+print('Created DMG background image')
+" || echo "Could not create background image - will use default"
+}'''
+        
+        background_script_path = resources_dir / "create_background.sh"
+        with open(background_script_path, 'w') as f:
+            f.write(background_script)
+        os.chmod(background_script_path, 0o755)
+        
+        # Run background creation
+        try:
+            subprocess.run(['bash', str(background_script_path)], cwd=resources_dir, check=False)
+        except Exception as e:
+            logger.warning(f"Could not create background: {e}")
+        
+        # Create Quick Start Guide
+        quick_start = f'''# Personal AI Agent - Quick Start Guide
+
+## Welcome!
+
+Thank you for downloading Personal AI Agent, your privacy-first AI assistant.
+
+## Installation
+
+1. **Drag and Drop**: Drag "Personal AI Agent.app" to your Applications folder
+2. **First Launch**: Double-click the app in Applications
+3. **Model Download**: The app will download the Phi-2 AI model (~1.7GB) on first run
+4. **Browser Access**: Once ready, visit http://localhost:8000
+
+## Features
+
+- 🔒 **Complete Privacy**: All AI processing happens locally on your Mac
+- 📄 **PDF Analysis**: Upload and query PDF documents
+- 📧 **Gmail Integration**: Search and analyze your emails (optional)
+- 🤖 **Local AI**: Phi-2 model for intelligent responses
+- 🔍 **Smart Search**: Semantic search across all your content
+
+## System Requirements
+
+- macOS 10.14 or later (Intel or Apple Silicon)
+- 8GB RAM (16GB recommended)
+- 15GB free disk space (for models and data)
+
+## Getting Started
+
+1. **Launch the app** from Applications
+2. **Wait for setup** (first launch takes a few minutes)
+3. **Open browser** to http://localhost:8000
+4. **Create account** and start uploading documents
+5. **Optional**: Configure Gmail integration in settings
+
+## Support
+
+- App logs: ~/Library/Logs/PersonalAIAgent/
+- Data location: ~/Library/Application Support/PersonalAIAgent/
+- GitHub: https://github.com/gitKnowsMe/PersonalAIAgent_backend
+
+## Privacy
+
+- All data stays on your Mac
+- No external AI services used
+- Your documents and emails remain private
+- Local processing with Phi-2 model
+
+Enjoy your private AI assistant!
+'''
+        
+        quick_start_path = resources_dir / "Quick Start Guide.md"
+        with open(quick_start_path, 'w') as f:
+            f.write(quick_start)
+        
+        logger.info(f"Created DMG resources in: {resources_dir}")
+        return True
+    
+    def create_professional_dmg(self):
+        """Create professional DMG using native macOS hdiutil."""
+        if self.target_platform != 'darwin':
+            return True
+            
+        logger.info("Creating professional DMG installer...")
+        
+        app_name = "Personal AI Agent"
+        app_bundle = f"{app_name}.app"
+        dmg_name = f"{app_name} Installer.dmg"
+        
+        # Ensure app bundle exists
+        app_path = self.dist_dir / app_bundle
+        if not app_path.exists():
+            logger.error(f"App bundle not found: {app_path}")
+            return False
+        
+        # Create temporary DMG staging directory
+        dmg_staging = self.dist_dir / "dmg_staging"
+        if dmg_staging.exists():
+            shutil.rmtree(dmg_staging)
+        dmg_staging.mkdir()
+        
+        # Copy app bundle to staging
+        shutil.copytree(app_path, dmg_staging / app_bundle)
+        
+        # Copy additional resources
+        resources_dir = self.base_dir / "dmg_resources"
+        if resources_dir.exists():
+            quick_start = resources_dir / "Quick Start Guide.md"
+            if quick_start.exists():
+                shutil.copy2(quick_start, dmg_staging / "Quick Start Guide.md")
+        
+        # Create DMG using native hdiutil
+        dmg_path = self.dist_dir / dmg_name
+        if dmg_path.exists():
+            dmg_path.unlink()
+        
+        logger.info(f"Creating DMG with hdiutil: {dmg_path}")
+        
+        try:
+            # Create DMG using hdiutil
+            cmd = [
+                'hdiutil', 'create',
+                '-volname', f'{app_name} Installer',
+                '-srcfolder', str(dmg_staging),
+                '-ov',  # Overwrite existing
+                '-format', 'UDZO',  # Compressed
+                str(dmg_path)
+            ]
+            
+            logger.info(f"Running hdiutil command: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0 and dmg_path.exists():
+                logger.info(f"DMG created successfully: {dmg_path}")
+                
+                # Get DMG size for reporting
+                dmg_size = dmg_path.stat().st_size / (1024 * 1024)  # MB
+                logger.info(f"DMG size: {dmg_size:.1f} MB")
+                
+                # Clean up staging directory
+                shutil.rmtree(dmg_staging)
+                
+                return True
+            else:
+                logger.error(f"DMG creation failed. Return code: {result.returncode}")
+                logger.error(f"Output: {result.stdout}")
+                logger.error(f"Error: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.error("DMG creation timed out")
+            return False
+        except Exception as e:
+            logger.error(f"Error creating DMG: {e}")
+            return False
     
     def package_distribution(self):
         """Package the distribution for release."""
@@ -774,6 +1114,17 @@ Build Date: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             if not self.build_executable():
                 return False
             
+            # Enhanced macOS app bundle creation
+            if not self.create_macos_app_bundle():
+                return False
+            
+            # Create DMG resources and professional DMG for macOS
+            if self.target_platform == 'darwin' and self.create_dmg:
+                if not self.create_dmg_resources():
+                    return False
+                if not self.create_professional_dmg():
+                    logger.warning("DMG creation failed, but app bundle is available")
+            
             # Create additional files
             self.create_installer_script()
             self.create_readme()
@@ -811,13 +1162,19 @@ def main():
         action="store_true",
         help="Build debug version with additional logging"
     )
+    parser.add_argument(
+        "--dmg",
+        action="store_true",
+        help="Create DMG installer for macOS (only works on macOS)"
+    )
     
     args = parser.parse_args()
     
     builder = ExecutableBuilder(
         include_models=args.include_models,
         target_platform=args.platform,
-        debug=args.debug
+        debug=args.debug,
+        create_dmg=args.dmg
     )
     
     success = builder.build()

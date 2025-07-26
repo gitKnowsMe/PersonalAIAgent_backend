@@ -1,0 +1,318 @@
+name: Build and Release Personal AI Agent
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.11'
+  
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install system dependencies
+      run: |
+        # Install create-dmg for professional DMG creation
+        brew install create-dmg
+        # Install Pillow dependencies
+        brew install libjpeg libpng
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow
+        
+    - name: Build macOS app bundle and DMG
+      run: |
+        echo "Building Personal AI Agent for macOS..."
+        python build_executable.py --platform darwin --dmg
+        
+    - name: Verify build artifacts
+      run: |
+        ls -la dist/
+        # Verify app bundle exists
+        if [ ! -d "dist/Personal AI Agent.app" ]; then
+          echo "Error: App bundle not created"
+          exit 1
+        fi
+        # Verify DMG exists
+        if [ ! -f "dist/Personal AI Agent Installer.dmg" ]; then
+          echo "Error: DMG not created"
+          exit 1
+        fi
+        
+    - name: Create ZIP archive for compatibility
+      run: |
+        cd dist
+        # Create ZIP version for backward compatibility
+        zip -r "PersonalAIAgent-macos-no-models.zip" "Personal AI Agent.app" "README.md" "install.py"
+        ls -la *.zip *.dmg
+        
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-build
+        path: |
+          dist/Personal AI Agent Installer.dmg
+          dist/PersonalAIAgent-macos-no-models.zip
+          dist/README.md
+          
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow
+        
+    - name: Build Windows executable
+      run: |
+        echo "Building Personal AI Agent for Windows..."
+        python build_executable.py --platform windows
+        
+    - name: Create Windows installer package
+      run: |
+        cd dist
+        # Create ZIP package for Windows
+        7z a "PersonalAIAgent-windows-no-models.zip" "PersonalAIAgent.exe" "README.md" "install.py"
+        dir *.zip *.exe
+        
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: |
+          dist/PersonalAIAgent-windows-no-models.zip
+          dist/README.md
+          
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libjpeg-dev libpng-dev
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow
+        
+    - name: Build Linux executable
+      run: |
+        echo "Building Personal AI Agent for Linux..."
+        python build_executable.py --platform linux
+        
+    - name: Create Linux package
+      run: |
+        cd dist
+        # Create tar.gz package for Linux
+        tar -czf "PersonalAIAgent-linux-no-models.tar.gz" "PersonalAIAgent" "README.md" "install.py"
+        ls -la *.tar.gz
+        
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-build
+        path: |
+          dist/PersonalAIAgent-linux-no-models.tar.gz
+          dist/README.md
+          
+  create-release:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Display structure of downloaded files
+      run: |
+        ls -la
+        find . -type f -name "*.dmg" -o -name "*.zip" -o -name "*.tar.gz" | head -10
+        
+    - name: Get release version
+      id: version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=v$(date +'%Y.%m.%d')-dev" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        release_name: Personal AI Agent ${{ steps.version.outputs.VERSION }}
+        body: |
+          # Personal AI Agent ${{ steps.version.outputs.VERSION }}
+          
+          ## 🚀 What's New
+          - **Enhanced macOS Experience**: Professional .app bundle with DMG installer
+          - **First-Run Setup**: Guided setup with progressive Phi-2 model download (~1.7GB)
+          - **Complete Privacy**: All AI processing happens locally on your device
+          - **Cross-Platform**: Support for macOS, Windows, and Linux
+          
+          ## 📦 Downloads
+          
+          ### macOS (Recommended)
+          - **Personal AI Agent Installer.dmg** - Professional macOS installer with drag-and-drop interface
+          - **PersonalAIAgent-macos-no-models.zip** - ZIP version for compatibility
+          
+          ### Windows
+          - **PersonalAIAgent-windows-no-models.zip** - Windows executable package
+          
+          ### Linux  
+          - **PersonalAIAgent-linux-no-models.tar.gz** - Linux executable package
+          
+          ## 🛠️ Installation
+          
+          ### macOS
+          1. Download `Personal AI Agent Installer.dmg`
+          2. Double-click to mount the installer
+          3. Drag "Personal AI Agent.app" to Applications folder
+          4. Launch from Applications - first run will download Phi-2 model (~1.7GB)
+          5. Browser opens automatically to http://localhost:8000
+          
+          ### Windows
+          1. Download and extract `PersonalAIAgent-windows-no-models.zip`
+          2. Run `install.py` to setup environment
+          3. Double-click `PersonalAIAgent.exe` to start
+          4. First run downloads AI models automatically
+          
+          ### Linux
+          1. Download and extract `PersonalAIAgent-linux-no-models.tar.gz`
+          2. Run `./install.py` to setup environment  
+          3. Execute `./PersonalAIAgent` to start
+          4. First run downloads AI models automatically
+          
+          ## ⚙️ System Requirements
+          - **macOS**: 10.14+ (Intel/Apple Silicon), 8GB RAM, 15GB free space
+          - **Windows**: Windows 10+, 8GB RAM, 15GB free space
+          - **Linux**: Ubuntu 20.04+/equivalent, 8GB RAM, 15GB free space
+          
+          ## 🔒 Privacy & Security
+          - All AI processing happens locally using Phi-2 model
+          - No data sent to external AI services
+          - Your documents and emails stay on your device
+          - Optional Gmail integration (OAuth2, local caching only)
+          
+          ---
+          
+          **Full Changelog**: https://github.com/gitKnowsMe/PersonalAIAgent_backend/commits/${{ steps.version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload macOS DMG
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-build/Personal AI Agent Installer.dmg
+        asset_name: Personal AI Agent Installer.dmg
+        asset_content_type: application/x-apple-diskimage
+        
+    - name: Upload macOS ZIP
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-build/PersonalAIAgent-macos-no-models.zip
+        asset_name: PersonalAIAgent-macos-no-models.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Windows ZIP
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./windows-build/PersonalAIAgent-windows-no-models.zip
+        asset_name: PersonalAIAgent-windows-no-models.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Linux TAR.GZ
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./linux-build/PersonalAIAgent-linux-no-models.tar.gz
+        asset_name: PersonalAIAgent-linux-no-models.tar.gz
+        asset_content_type: application/gzip
+        
+    - name: Upload README
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-build/README.md
+        asset_name: README.md
+        asset_content_type: text/markdown
