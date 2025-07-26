@@ -55,6 +55,72 @@ class ExecutableBuilder:
     def get_hidden_imports(self) -> List[str]:
         """Get list of hidden imports for PyInstaller."""
         hidden_imports = [
+            # Personal AI Agent App Modules
+            'app',
+            'app.main',
+            'app.core',
+            'app.core.config',
+            'app.core.security',
+            'app.core.constants',
+            'app.core.exceptions',
+            'app.db',
+            'app.db.database',
+            'app.db.database_portable',
+            'app.db.models',
+            'app.db.session_manager',
+            'app.api',
+            'app.api.dependencies',
+            'app.api.endpoints',
+            'app.api.endpoints.auth',
+            'app.api.endpoints.documents',
+            'app.api.endpoints.queries',
+            'app.api.endpoints.gmail',
+            'app.api.endpoints.sources',
+            'app.services',
+            'app.services.embedding_service',
+            'app.services.vector_store_service',
+            'app.services.query_router',
+            'app.services.email_ingestion_service',
+            'app.services.gmail_service',
+            'app.services.email_auth_service',
+            'app.services.document_content_service',
+            'app.services.source_service',
+            'app.services.error_message_service',
+            'app.services.fallback_message_service',
+            'app.services.ai_config_service',
+            'app.services.email',
+            'app.services.email.email_classifier',
+            'app.services.email.email_ingestion',
+            'app.services.email.email_processor',
+            'app.services.email.email_query',
+            'app.services.email.email_store',
+            'app.utils',
+            'app.utils.llm',
+            'app.utils.logging_config',
+            'app.utils.config_utils',
+            'app.utils.document_classifier',
+            'app.utils.document_processor',
+            'app.utils.dynamic_query_handler',
+            'app.utils.error_monitor',
+            'app.utils.file_security',
+            'app.utils.response_filter',
+            'app.utils.processors',
+            'app.utils.processors.base_processor',
+            'app.utils.processors.email_processor',
+            'app.utils.processors.financial_processor',
+            'app.utils.processors.pdf_processor',
+            'app.utils.processors.text_processor',
+            'app.schemas',
+            'app.schemas.document',
+            'app.schemas.email',
+            'app.schemas.query',
+            'app.schemas.user',
+            'app.middleware',
+            'app.middleware.logging_middleware',
+            'app.middleware.rate_limiting',
+            'app.exceptions',
+            'app.exceptions.email_exceptions',
+            
             # FastAPI and related
             'fastapi',
             'fastapi.responses',
@@ -211,16 +277,14 @@ class ExecutableBuilder:
             if migration_path.exists():
                 data_files.append((str(migration_path), migration_file))
         
-        # Add portable database configuration
-        portable_db_files = [
-            "app/db/database_portable.py",
-            "app/db/models_portable.py",
-        ]
-        
-        for db_file in portable_db_files:
-            db_path = self.base_dir / db_file
-            if db_path.exists():
-                data_files.append((str(db_path), db_file))
+        # Include entire app directory as source code (not data files)
+        # PyInstaller will handle Python modules automatically
+        # but we need to ensure all .py files are discoverable
+        app_dir = self.base_dir / "app"
+        if app_dir.exists():
+            for py_file in app_dir.rglob("*.py"):
+                # Don't include as data files - let PyInstaller handle as modules
+                logger.info(f"Found Python module: {py_file.relative_to(self.base_dir)}")
         
         return data_files
     
