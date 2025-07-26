@@ -70,7 +70,7 @@ jobs:
         ls -la *.zip *.dmg
         
     - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-build
         path: |
@@ -117,7 +117,7 @@ jobs:
         dir *.zip *.exe
         
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-build
         path: |
@@ -168,7 +168,7 @@ jobs:
         ls -la *.tar.gz
         
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-build
         path: |
@@ -184,7 +184,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       
     - name: Display structure of downloaded files
       run: |
@@ -202,12 +202,12 @@ jobs:
         
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.version.outputs.VERSION }}
-        release_name: Personal AI Agent ${{ steps.version.outputs.VERSION }}
+        name: Personal AI Agent ${{ steps.version.outputs.VERSION }}
         body: |
           # Personal AI Agent ${{ steps.version.outputs.VERSION }}
           
@@ -266,53 +266,9 @@ jobs:
           **Full Changelog**: https://github.com/gitKnowsMe/PersonalAIAgent_backend/commits/${{ steps.version.outputs.VERSION }}
         draft: false
         prerelease: false
-        
-    - name: Upload macOS DMG
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos-build/Personal AI Agent Installer.dmg
-        asset_name: Personal AI Agent Installer.dmg
-        asset_content_type: application/x-apple-diskimage
-        
-    - name: Upload macOS ZIP
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos-build/PersonalAIAgent-macos-no-models.zip
-        asset_name: PersonalAIAgent-macos-no-models.zip
-        asset_content_type: application/zip
-        
-    - name: Upload Windows ZIP
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./windows-build/PersonalAIAgent-windows-no-models.zip
-        asset_name: PersonalAIAgent-windows-no-models.zip
-        asset_content_type: application/zip
-        
-    - name: Upload Linux TAR.GZ
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./linux-build/PersonalAIAgent-linux-no-models.tar.gz
-        asset_name: PersonalAIAgent-linux-no-models.tar.gz
-        asset_content_type: application/gzip
-        
-    - name: Upload README
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos-build/README.md
-        asset_name: README.md
-        asset_content_type: text/markdown
+        files: |
+          macos-build/Personal AI Agent Installer.dmg
+          macos-build/PersonalAIAgent-macos-no-models.zip
+          windows-build/PersonalAIAgent-windows-no-models.zip
+          linux-build/PersonalAIAgent-linux-no-models.tar.gz
+          macos-build/README.md
