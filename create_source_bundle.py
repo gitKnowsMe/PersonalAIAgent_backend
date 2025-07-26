@@ -189,7 +189,27 @@ print("4. Browser opens at http://localhost:8000")
     with open(dist_dir / "README.md", 'w') as f:
         f.write(readme)
     
+    # Create professional DMG
+    dmg_path = dist_dir / "Personal AI Agent Installer.dmg"
+    logger.info("Creating professional DMG installer...")
+    
+    dmg_cmd = [
+        'hdiutil', 'create',
+        '-volname', 'Personal AI Agent Installer',
+        '-srcfolder', str(dist_dir),
+        '-ov', '-format', 'UDZO',
+        str(dmg_path)
+    ]
+    
+    try:
+        subprocess.run(dmg_cmd, check=True, capture_output=True)
+        logger.info(f"✅ DMG created: {dmg_path}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ DMG creation failed: {e}")
+        return False
+    
     logger.info("✅ Source bundle distribution created successfully!")
+    logger.info("✅ Enhanced DMG with Progressive Setup complete!")
     return True
 
 if __name__ == "__main__":
