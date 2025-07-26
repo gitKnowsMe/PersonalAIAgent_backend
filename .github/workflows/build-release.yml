@@ -22,23 +22,47 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+        
     - name: Install system dependencies
       run: |
-        # Install create-dmg for professional DMG creation
-        brew install create-dmg
-        # Install Pillow dependencies
-        brew install libjpeg libpng
+        # Install only essential system packages - we use native hdiutil for DMG creation
+        echo "Using native macOS tools - no additional system packages needed"
         
-    - name: Install Python dependencies
+    - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller pillow
+        # Install build tools first with extended timeout
+        pip install --timeout 600 --retries 5 pyinstaller pillow
+        
+    - name: Install heavy ML dependencies
+      run: |
+        # Install the heaviest dependencies separately with extended timeout
+        pip install --timeout 900 --retries 5 llama-cpp-python==0.3.9
+        pip install --timeout 600 --retries 5 faiss-cpu==1.11.0
+        pip install --timeout 600 --retries 5 sentence-transformers==4.1.0
+        
+    - name: Install remaining dependencies  
+      run: |
+        # Install remaining lighter dependencies
+        pip install --timeout 300 --retries 3 -r requirements.txt
         
     - name: Build macOS app bundle and DMG
       run: |
         echo "🚀 Building Personal AI Agent Enhanced DMG for macOS..."
+        echo "Python version: $(python --version)"
+        echo "Current directory: $(pwd)"
+        echo "Available files:"
+        ls -la
+        echo "Starting build process..."
         python build_executable.py --platform darwin --dmg
+        echo "Build completed. Checking outputs..."
         
     - name: Verify build artifacts
       run: |
