@@ -59,10 +59,19 @@ def create_source_bundle():
     if static_dir.exists():
         shutil.copytree(static_dir, resources_dir / "static")
     
-    # Create launcher script
+    # Create launcher script with permission fixes
     launcher_script = f"""#!/bin/bash
+# Personal AI Agent Launcher with macOS Permission Fixes
+
 cd "$(dirname "$0")/../Resources"
 export PYTHONPATH="$(pwd):$PYTHONPATH"
+
+echo "🚀 Personal AI Agent Starting..."
+echo "==============================="
+
+# Remove quarantine attributes from this session
+xattr -d com.apple.quarantine "$(dirname "$0")/../.." 2>/dev/null || true
+xattr -r -d com.apple.quarantine . 2>/dev/null || true
 
 # Check if models exist, download if needed
 if [ ! -f "models/phi-2-instruct-Q4_K_M.gguf" ]; then
@@ -71,12 +80,25 @@ if [ ! -f "models/phi-2-instruct-Q4_K_M.gguf" ]; then
 fi
 
 # Start the backend
-echo "🚀 Starting Personal AI Agent..."
-python3 start_backend.py --skip-setup
+echo "🎯 Starting backend server..."
+python3 start_backend.py --skip-setup &
 
-# Open browser
-sleep 3
-open http://localhost:8000
+# Wait for server to start
+echo "⏳ Waiting for server to initialize..."
+sleep 5
+
+# Check if server is running
+if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+    echo "✅ Server ready!"
+    echo "🌐 Opening browser..."
+    open http://localhost:8000
+else
+    echo "⚠️  Server starting (may take a moment)..."
+    echo "🌐 You can manually visit: http://localhost:8000"
+    open http://localhost:8000
+fi
+
+echo "✅ Personal AI Agent launched successfully!"
 """
     
     launcher_path = macos_dir / "Personal AI Agent"
@@ -121,7 +143,7 @@ open http://localhost:8000
     
     logger.info(f"✅ Source bundle created: {app_bundle_path}")
     
-    # Create install script
+    # Create install script with permission fixes
     install_script = """#!/usr/bin/env python3
 import os
 import sys
@@ -143,16 +165,41 @@ for dir_name in data_dirs:
     Path(dir_name).mkdir(parents=True, exist_ok=True)
     print(f"📁 Created: {dir_name}")
 
+print("\\n🔧 Fixing macOS permissions...")
+
+# Remove quarantine attributes
+try:
+    subprocess.run(["xattr", "-r", "-d", "com.apple.quarantine", "."], 
+                  capture_output=True, check=False)
+    print("   ✓ Removed quarantine attributes")
+except:
+    pass
+
+# Fix app bundle permissions
+app_files = list(Path(".").glob("*.app"))
+for app_path in app_files:
+    try:
+        subprocess.run(["chmod", "-R", "755", str(app_path)], check=False)
+        print(f"   ✓ Fixed permissions: {app_path.name}")
+    except:
+        pass
+
 print("\\n✅ Installation complete!")
 print("\\nNext steps:")
-print("1. Move 'Personal AI Agent.app' to Applications folder")
-print("2. Double-click to launch")
+print("1. Double-click 'Personal AI Agent.app' to launch")
+print("2. If permission dialog appears, click 'OK' and try again")
 print("3. First run will download Phi-2 model (~1.7GB)")
 print("4. Browser opens at http://localhost:8000")
+print("\\n🔧 If issues persist, run: python3 fix_macos_permissions.py")
 """
     
     with open(dist_dir / "install.py", 'w') as f:
         f.write(install_script)
+    
+    # Copy permission fix script
+    fix_script_src = base_dir / "fix_macos_permissions.py"
+    if fix_script_src.exists():
+        shutil.copy2(fix_script_src, dist_dir / "fix_macos_permissions.py")
     
     # Create README
     readme = """# Personal AI Agent - Enhanced DMG Distribution
