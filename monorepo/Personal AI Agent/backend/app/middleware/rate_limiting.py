@@ -68,10 +68,10 @@ RATE_LIMITS = {
     "/api/emails": "100/hour",
     "/api/emails/search": "100/hour",
     
-    # Health checks and status - very permissive for frontend detection
-    "/api/health-check": "10000/hour",  # Allow frequent health checks for backend detection
-    "/api/backend-status": "10000/hour",
-    "/api/": "1000/hour",
+    # Health checks and status - essentially unlimited for frontend detection
+    "/api/health-check": "1000000/hour",  # 1 million per hour = essentially unlimited
+    "/api/backend-status": "1000000/hour",
+    "/api/": "100000/hour",
 }
 
 
@@ -81,7 +81,7 @@ def apply_rate_limits(app):
     # Add the rate limiter to the app state
     app.state.limiter = limiter
     
-    # Add the middleware
+    # Add rate limiting middleware
     app.add_middleware(SlowAPIMiddleware)
     
     # Add exception handler for rate limit exceeded
