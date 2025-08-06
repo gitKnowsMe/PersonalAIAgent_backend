@@ -12,7 +12,7 @@ DEFAULT_VERSION = "0.1.0"
 DEFAULT_DESCRIPTION = "A fully private AI assistant for your documents"
 
 # Security Constants
-DEFAULT_TOKEN_EXPIRE_MINUTES = 15
+DEFAULT_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours - Extended from 15 minutes to prevent frequent logouts
 DEFAULT_LOGIN_ENDPOINT = "/api/login"
 DEFAULT_SECRET_KEY_LENGTH = 32
 
