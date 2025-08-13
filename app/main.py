@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.core.constants import DEFAULT_DESCRIPTION, OPENAPI_URL_SUFFIX
 from app.db.database import get_db, Base, engine
 from app.api.endpoints import auth, documents, queries, gmail, emails, sources, admin, updates
-from app.middleware.rate_limiting import apply_rate_limits
+from app.middleware.rate_limiting import apply_rate_limits, limiter
 from app.middleware.session_monitoring import session_monitoring_middleware
 
 # Create logger for this module
@@ -71,12 +71,28 @@ app.add_middleware(
     allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Add Private Network Access headers for recent browser security policies
+@app.middleware("http")
+async def add_private_network_headers(request, call_next):
+    response = await call_next(request)
+    
+    # Add headers to allow public sites to access localhost
+    # This addresses recent Chrome/browser security restrictions
+    if request.method == "OPTIONS":
+        # Check if browser is requesting private network access
+        private_network_requested = request.headers.get("access-control-request-private-network")
+        if private_network_requested:
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+    
+    return response
 
 # Apply rate limiting
 try:
     apply_rate_limits(app)
-    logger.info("Rate limiting enabled")
+    logger.info("Rate limiting enabled with high limits for health checks")
 except ImportError as e:
     logger.warning(f"Rate limiting not available (install slowapi): {e}")
 except Exception as e:
@@ -165,12 +181,14 @@ async def api_root():
     }
 
 @app.get(f"{settings.API_V1_STR}/health-check")
-async def health_check():
+@limiter.limit("1000000/hour")  # Essentially unlimited for frontend health checks
+async def health_check(request: Request):
     """Health check endpoint"""
     return {"status": "ok", "version": settings.VERSION}
 
 @app.get("/api/backend-status")
-async def backend_status():
+@limiter.limit("1000000/hour")  # Essentially unlimited for frontend backend detection
+async def backend_status(request: Request):
     """Backend detection endpoint for frontend"""
     return {
         "backend_installed": True,

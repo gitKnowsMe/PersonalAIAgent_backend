@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import logging
 
+from app.api.dependencies import get_current_user
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
@@ -132,4 +133,28 @@ async def logout():
     This endpoint mainly serves as a confirmation and for logging purposes.
     """
     logger.info("User logged out successfully")
+<<<<<<< HEAD
     return {"message": "Logged out successfully"} 
+=======
+    return {"message": "Logged out successfully"}
+
+
+@router.get("/profile", response_model=UserResponse)
+async def get_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get current user's profile information
+    
+    Returns the authenticated user's profile data including:
+    - username
+    - email 
+    - is_active status
+    - is_admin status
+    - created_at timestamp
+    """
+    logger.info(f"Profile requested for user: {current_user.username} (ID: {current_user.id})")
+    
+    return current_user 
+>>>>>>> origin/fix/rate-limiting-and-search-improvements

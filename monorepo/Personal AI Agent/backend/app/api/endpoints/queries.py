@@ -169,12 +169,12 @@ async def ask_question(
                 'search_emails': False
             }
         else:
-            # Default: search all sources
+            # Default: prioritize PDF search, only search emails with explicit keywords
             source_params = {
                 'document_id': None,
                 'email_type_filter': None,
                 'search_documents': True,
-                'search_emails': True
+                'search_emails': False  # Only search emails when explicitly requested with keywords
             }
         
         # Check if user has any documents (using cache) - but only if searching documents
@@ -221,36 +221,38 @@ async def ask_question(
         # Check for email prioritization keywords
         query_lower = query.question.lower().strip()
         email_prioritization_keywords = [
-            # Current keywords
-            "check emails", "search emails", "find emails", "look in emails", 
-            "email search", "inbox search", "check my emails", "search my inbox",
-            "check email", "find email", "look in email",
+            # Explicit email commands
+            "check email", "check emails", "search email", "search emails", 
+            "find email", "find emails", "look in email", "look in emails",
+            "check inbox", "search inbox", "verify inbox", "see inbox",
+            "check my email", "check my emails", "search my email", "search my emails",
+            "email search", "inbox search", "search my inbox",
             
-            # Enhanced natural variations
-            "in my emails", "from emails", "email about", "emails for",
-            "check inbox", "search inbox", "look in inbox",
-            "my gmail", "gmail search", "email messages",
-            
-            # Question patterns
-            "did I get an email", "any emails about", "email from",
-            "emails containing", "emails with"
+            # Email-specific queries  
+            "email from", "emails from", "email about", "emails about",
+            "did I get an email", "any emails about", "show me emails",
+            "in my email", "in my emails", "from my email", "from my emails",
+            "gmail search", "email messages", "inbox messages",
+            "emails for", "emails containing", "emails with",
+            "my gmail", "look in inbox"
         ]
         prioritize_emails = any(keyword in query_lower for keyword in email_prioritization_keywords)
         logger.info(f"DEBUG: Query='{query_lower}', Keywords={email_prioritization_keywords}")
         logger.info(f"🔍 DEBUG: Prioritize emails={prioritize_emails}")
         if prioritize_emails:
             matching_keyword = next(keyword for keyword in email_prioritization_keywords if keyword in query_lower)
-            logger.info(f"🔍 DEBUG: Query contains '{matching_keyword}' - PRIORITIZING EMAIL SEARCH for user {current_user.id}")
+            logger.info(f"🔍 EMAIL-ONLY SEARCH: Query contains '{matching_keyword}' - searching emails exclusively for user {current_user.id}")
             
-            # CRITICAL FIX: Override source parameters for EMAIL-ONLY search when email prioritization is detected
-            logger.info(f"🔍 DEBUG: EMAIL PRIORITIZATION DETECTED - forcing email-only search")
-            logger.info(f"🔍 DEBUG: Before override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            # Override source parameters for EMAIL-ONLY search when email prioritization is detected
+            logger.info(f"🔍 EMAIL PRIORITIZATION DETECTED - forcing email-only search")
+            logger.info(f"🔍 Before override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
             source_params['search_emails'] = True
-            source_params['search_documents'] = False  # ⭐ KEY ADDITION
-            logger.info(f"🔍 DEBUG: After override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
-            logger.info(f"🔍 DEBUG: CRITICAL CHECK - source_params after override: {source_params}")
+            source_params['search_documents'] = False  # Make email search exclusive
+            logger.info(f"🔍 After override - search_emails={source_params.get('search_emails')}, search_documents={source_params.get('search_documents')}")
+            logger.info(f"🔍 Final source_params: {source_params}")
         else:
-            logger.info(f"🔍 DEBUG: No email prioritization keywords found in query for user {current_user.id}")
+            logger.info(f"🔍 PDF-PRIORITY SEARCH: No email keywords found - searching PDFs only for user {current_user.id}")
+            logger.info(f"🔍 Default search mode - search_documents={source_params.get('search_documents')}, search_emails={source_params.get('search_emails')}")
         
         # Search for similar chunks using vector search based on source selection
         try:

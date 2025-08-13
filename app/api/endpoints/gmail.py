@@ -64,10 +64,16 @@ async def initiate_gmail_auth(
     Initiate Gmail OAuth2 authentication by redirecting to Google
     """
     try:
+<<<<<<< HEAD
         from fastapi.responses import RedirectResponse
         from fastapi import Request
         import uuid
         from jose import JWTError, jwt
+=======
+        import uuid
+        from jose import JWTError, jwt
+        from fastapi.responses import RedirectResponse
+>>>>>>> origin/fix/rate-limiting-and-search-improvements
         
         # Authenticate user from token parameter or header
         auth_token = token
@@ -127,13 +133,21 @@ async def initiate_gmail_auth(
         return RedirectResponse(url=auth_url, status_code=302)
         
     except NetworkError as e:
+<<<<<<< HEAD
         logger.error(f"Network error initiating Gmail auth for user {current_user.id}: {e.message}")
+=======
+        logger.error(f"Network error initiating Gmail auth: {e.message}")
+>>>>>>> origin/fix/rate-limiting-and-search-improvements
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Network error: {e.message}"
         )
     except Exception as e:
+<<<<<<< HEAD
         logger.error(f"Error initiating Gmail auth for user {current_user.id}: {e}")
+=======
+        logger.error(f"Error initiating Gmail auth: {e}")
+>>>>>>> origin/fix/rate-limiting-and-search-improvements
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to initiate Gmail authentication"
@@ -608,6 +622,7 @@ async def get_emails(
         )
 
 
+<<<<<<< HEAD
 @router.post("/chunking-preferences")
 async def set_chunking_preferences(
     preferences: Dict,
@@ -708,6 +723,8 @@ async def reprocess_emails(
         )
 
 
+=======
+>>>>>>> origin/fix/rate-limiting-and-search-improvements
 @router.post("/search", response_model=EmailSearchResponse)
 async def search_emails(
     request: EmailSearchRequest,
@@ -808,11 +825,31 @@ async def _process_synced_emails(email_account_id: int, user_id: int):
                         'attachments': []  # We'll handle attachments later
                     }
                     
+<<<<<<< HEAD
                     # Simplified email type detection (no classification needed)
                     email.email_type = 'email'  # Simplified - all emails are just 'email'
                     
                     # Process email content for vector storage with user-aware chunking
                     processed_chunks = await email_processor.process_email(email_data, email.user_id)
+=======
+                    # Classify email using our classifier
+                    classification_tags = email_classifier.classify_email(email_data)
+                    
+                    # Update email type based on classification
+                    if 'receipt' in classification_tags:
+                        email.email_type = 'transactional'
+                    elif 'work' in classification_tags:
+                        email.email_type = 'business'
+                    elif 'personal' in classification_tags:
+                        email.email_type = 'personal'
+                    elif 'promotional' in classification_tags:
+                        email.email_type = 'promotional'
+                    else:
+                        email.email_type = 'generic'
+                    
+                    # Process email content for vector storage
+                    processed_chunks = await email_processor.process_email(email_data, email.user_id, classification_tags)
+>>>>>>> origin/fix/rate-limiting-and-search-improvements
                     
                     if processed_chunks:
                         # Generate unique email ID for storage
