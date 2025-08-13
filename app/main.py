@@ -11,7 +11,9 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.constants import DEFAULT_DESCRIPTION, OPENAPI_URL_SUFFIX
 from app.db.database import get_db, Base, engine
-from app.api.endpoints import auth, documents, queries, gmail, emails, sources, admin, updates
+from app.core.multi_user_db import db_manager
+from app.api.endpoints import documents, queries, gmail, emails, sources, admin, updates  # Removed legacy auth
+from app.api.endpoints import multiuser_auth
 from app.middleware.rate_limiting import apply_rate_limits, limiter
 from app.middleware.session_monitoring import session_monitoring_middleware
 
@@ -25,34 +27,50 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Application startup: Initializing...")
     
-    # Create necessary directories
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    os.makedirs(settings.VECTOR_DB_PATH, exist_ok=True)
-    os.makedirs(settings.EMAIL_STORAGE_DIR, exist_ok=True)
-    os.makedirs(settings.EMAIL_VECTOR_DB_PATH, exist_ok=True)
-    logger.info("Created necessary directories")
-    
-    # Create database tables
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created")
-    
-    # Test database connection
+    # Initialize multi-user database manager
     try:
-        db = next(get_db())
-        db.execute(text("SELECT 1"))
-        logger.info("Database connection successful!")
+        await db_manager.initialize()
+        logger.info("Multi-user database manager initialized successfully")
     except Exception as e:
-        logger.error(f"Database connection failed: {str(e)}")
-        raise
-    finally:
-        db.close()
+        logger.error(f"Multi-user database manager initialization failed: {e}")
+        # Fall back to single-user mode for backward compatibility
+        logger.warning("Falling back to single-user database mode")
+        
+        # Create necessary directories
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        os.makedirs(settings.VECTOR_DB_PATH, exist_ok=True)
+        os.makedirs(settings.EMAIL_STORAGE_DIR, exist_ok=True)
+        os.makedirs(settings.EMAIL_VECTOR_DB_PATH, exist_ok=True)
+        logger.info("Created necessary directories")
+        
+        # Create database tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created")
+        
+        # Test database connection
+        try:
+            db = next(get_db())
+            db.execute(text("SELECT 1"))
+            logger.info("Database connection successful!")
+        except Exception as db_e:
+            logger.error(f"Database connection failed: {str(db_e)}")
+            raise
+        finally:
+            db.close()
     
     logger.info("Application startup completed")
     
     yield
     
     # Shutdown
-    logger.info("Application shutdown")
+    logger.info("Application shutdown: Cleaning up...")
+    try:
+        await db_manager.close()
+        logger.info("Multi-user database manager closed successfully")
+    except Exception as e:
+        logger.warning(f"Error during database manager shutdown: {e}")
+    
+    logger.info("Application shutdown completed")
 
 
 # Initialize FastAPI app with modern lifespan
@@ -138,7 +156,8 @@ async def validate_login_requests(request: Request, call_next):
     return response
 
 # Include API routers
-app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["auth"])
+# app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["auth"])  # Legacy auth - DISABLED for multi-user system
+app.include_router(multiuser_auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["multiuser-auth"])  # New multi-user auth
 app.include_router(documents.router, prefix=settings.API_V1_STR, tags=["documents"])
 app.include_router(queries.router, prefix=settings.API_V1_STR, tags=["queries"])
 app.include_router(gmail.router, prefix=settings.API_V1_STR, tags=["gmail"])
@@ -171,7 +190,7 @@ async def api_root():
         "docs_url": f"{settings.API_V1_STR}/docs",
         "health_check": f"{settings.API_V1_STR}/health-check",
         "endpoints": {
-            "auth": f"{settings.API_V1_STR}/login",
+            "auth": f"{settings.API_V1_STR}/auth/login",
             "documents": f"{settings.API_V1_STR}/documents",
             "queries": f"{settings.API_V1_STR}/queries",
             "gmail": f"{settings.API_V1_STR}/gmail",
