@@ -1,0 +1,20 @@
+---
+description: >
+  Ensure all code written for the Personal AI Agent project is modular, secure, config-driven,
+  and follows architecture-specific best practices including LangGraph, FastAPI, PostgreSQL, and local-first RAG.
+  Code must avoid hardcoding values, be structured for testability, and support privacy-first development.
+
+globs:
+  - "**/*.py"
+  - "**/*.ts"
+  - "**/*.md"
+  - "**/*.json"
+  - "langgraph/**/*.py"
+  - "api/**/*.py"
+  - "retriever/**/*.py"
+  - "database/**/*.py"
+  - "auth/**/*.py"
+  - "config.py"
+
+alwaysApply: false
+---

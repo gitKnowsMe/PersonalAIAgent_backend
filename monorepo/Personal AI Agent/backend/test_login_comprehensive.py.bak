@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+"""
+Comprehensive login test with correct OAuth2 form data format
+"""
+import json
+import requests
+import sys
+import sqlite3
+from pathlib import Path
+
+def test_backend_connectivity():
+    """Test if backend server is running"""
+    print("1. Testing backend connectivity...")
+    
+    try:
+        # Test root endpoint
+        response = requests.get("http://localhost:8000/", timeout=5)
+        if response.status_code == 200:
+            print("   ✓ Backend server is running")
+            data = response.json()
+            print(f"   - Status: {data.get('status')}")
+            print(f"   - Version: {data.get('version')}")
+            return True
+        else:
+            print(f"   ✗ Backend returned status {response.status_code}")
+            return False
+    except requests.exceptions.ConnectionError:
+        print("   ✗ Cannot connect to backend server")
+        print("   Recommendation: Run 'python start_backend.py' to start the backend")
+        return False
+    except Exception as e:
+        print(f"   ✗ Error: {e}")
+        return False
+
+def check_database_users():
+    """Check database for users"""
+    print("\n2. Checking database for users...")
+    
+    # Find database files
+    base_dir = Path(__file__).parent
+    db_files = [
+        base_dir / "personal_ai_agent.db",
+        base_dir / "data" / "app.db"
+    ]
+    
+    found_gmail_tester = False
+    for db_path in db_files:
+        if db_path.exists():
+            print(f"   ✓ Found database: {db_path}")
+            try:
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                
+                # Check if users table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+                if cursor.fetchone():
+                    # Get all users
+                    cursor.execute("SELECT id, username, email, is_active FROM users")
+                    users = cursor.fetchall()
+                    
+                    print(f"   ✓ Found {len(users)} users:")
+                    for user in users:
+                        user_id, username, email, is_active = user
+                        print(f"     - {username} (ID: {user_id}, Email: {email}, Active: {is_active})")
+                        if username == "gmail_tester":
+                            found_gmail_tester = True
+                
+                conn.close()
+            except sqlite3.Error as e:
+                print(f"   ✗ Database error: {e}")
+    
+    return found_gmail_tester
+
+def test_login_oauth2_format():
+    """Test login with OAuth2 form data format (correct format)"""
+    print("\n3. Testing login with OAuth2 form data format...")
+    
+    # The correct credentials from test_login_debug.html
+    credentials = {
+        "username": "gmail_tester",
+        "password": "Iomaguire1"
+    }
+    
+    try:
+        print(f"   Testing login with username: {credentials['username']}")
+        
+        # OAuth2PasswordRequestForm expects application/x-www-form-urlencoded
+        response = requests.post(
+            "http://localhost:8000/api/login",
+            data=credentials,  # Use data (form-encoded) not json
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=10
+        )
+        
+        print(f"   Response status: {response.status_code}")
+        print(f"   Response headers: {dict(response.headers)}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("   ✓ Login successful!")
+            print(f"   - Access token: {data.get('access_token', 'N/A')[:50]}...")
+            print(f"   - Token type: {data.get('token_type', 'N/A')}")
+            return True
+        else:
+            print(f"   ✗ Login failed with status {response.status_code}")
+            print(f"   - Response: {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"   ✗ Login test error: {e}")
+        return False
+
+def test_login_json_format():
+    """Test login with JSON format (incorrect format - should fail)"""
+    print("\n4. Testing login with JSON format (should fail)...")
+    
+    credentials = {
+        "username": "gmail_tester",
+        "password": "Iomaguire1"
+    }
+    
+    try:
+        # Test JSON format (incorrect for OAuth2PasswordRequestForm)
+        response = requests.post(
+            "http://localhost:8000/api/login",
+            json=credentials,  # JSON format
+            timeout=10
+        )
+        
+        print(f"   Response status: {response.status_code}")
+        
+        if response.status_code == 422:
+            print("   ✓ Correctly rejected JSON format (422 Unprocessable Entity)")
+            return True
+        elif response.status_code == 200:
+            print("   ✗ Unexpectedly accepted JSON format")
+            return False
+        else:
+            print(f"   ? Unexpected response: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"   ✗ JSON test error: {e}")
+        return False
+
+def test_invalid_credentials():
+    """Test with invalid credentials"""
+    print("\n5. Testing invalid credentials...")
+    
+    invalid_credentials = {
+        "username": "gmail_tester",
+        "password": "wrongpassword"
+    }
+    
+    try:
+        response = requests.post(
+            "http://localhost:8000/api/login",
+            data=invalid_credentials,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=10
+        )
+        
+        print(f"   Response status: {response.status_code}")
+        
+        if response.status_code == 401:
+            print("   ✓ Correctly rejected invalid credentials (401 Unauthorized)")
+            return True
+        else:
+            print(f"   ✗ Unexpected response: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"   ✗ Invalid credentials test error: {e}")
+        return False
+
+def test_token_usage():
+    """Test using the access token"""
+    print("\n6. Testing token usage...")
+    
+    # First get a token
+    credentials = {
+        "username": "gmail_tester",
+        "password": "Iomaguire1"
+    }
+    
+    try:
+        # Login to get token
+        response = requests.post(
+            "http://localhost:8000/api/login",
+            data=credentials,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=10
+        )
+        
+        if response.status_code != 200:
+            print("   ✗ Could not get token for testing")
+            return False
+        
+        token_data = response.json()
+        access_token = token_data.get("access_token")
+        
+        if not access_token:
+            print("   ✗ No access token in response")
+            return False
+        
+        # Test using token to access protected endpoint
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        protected_response = requests.get(
+            "http://localhost:8000/api/documents",
+            headers=headers,
+            timeout=10
+        )
+        
+        print(f"   Protected endpoint response: {protected_response.status_code}")
+        
+        if protected_response.status_code in [200, 404]:  # 200 = has docs, 404 = no docs
+            print("   ✓ Token successfully used for protected endpoint")
+            return True
+        else:
+            print(f"   ✗ Token failed for protected endpoint: {protected_response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"   ✗ Token usage test error: {e}")
+        return False
+
+def main():
+    """Run all tests"""
+    print("=== Comprehensive Login Diagnosis ===\n")
+    
+    results = {
+        "backend_running": test_backend_connectivity(),
+        "gmail_tester_exists": check_database_users(),
+        "oauth2_login_works": test_login_oauth2_format(),
+        "json_correctly_rejected": test_login_json_format(),
+        "invalid_creds_rejected": test_invalid_credentials(),
+        "token_works": test_token_usage()
+    }
+    
+    print("\n=== Summary ===")
+    for test_name, result in results.items():
+        status = "✓" if result else "✗"
+        print(f"{status} {test_name}: {result}")
+    
+    print("\n=== Analysis ===")
+    if not results["backend_running"]:
+        print("❌ Backend server is not running")
+        print("   Fix: Run 'python start_backend.py'")
+    elif not results["gmail_tester_exists"]:
+        print("❌ User 'gmail_tester' does not exist")
+        print("   Fix: Run 'python create_admin.py' and create the user")
+    elif not results["oauth2_login_works"]:
+        print("❌ Login with correct format is failing")
+        print("   Check: Backend logs for authentication errors")
+    elif results["oauth2_login_works"]:
+        print("✅ Backend login is working correctly!")
+        print("   The issue is likely on the frontend side:")
+        print("   - Check if frontend is using correct content type")
+        print("   - Verify frontend is sending form data, not JSON")
+        print("   - Check for CORS issues")
+        print("   - Verify frontend error handling")
+    
+    if results["oauth2_login_works"]:
+        print("\n🔧 Frontend Integration Tips:")
+        print("   - Content-Type: 'application/x-www-form-urlencoded'")
+        print("   - Use FormData or URLSearchParams, not JSON")
+        print("   - Check browser network tab for actual request format")
+        print("   - Test with test_login_debug.html to verify")
+
+if __name__ == "__main__":
+    main()

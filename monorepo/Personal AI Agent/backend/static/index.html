@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal AI Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        #test-message {
+            background-color: #ffeb3b;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #debug-section {
+            background-color: #f8d7da;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c2c7;
+            border-radius: 4px;
+        }
+        .debug-item {
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+        .loading-spinner {
+            width: 3rem; 
+            height: 3rem;
+            margin: 2rem auto;
+            display: block;
+        }
+        #fallback-content {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-message">
+        If you can see this message, the page is loading correctly. Check the browser console for debug messages.
+    </div>
+    
+    <div id="debug-section" class="container">
+        <h5>Debug Information</h5>
+        <div id="debug-info">
+            <div class="debug-item" id="debug-js">JavaScript: <span class="badge bg-warning">Checking...</span></div>
+            <div class="debug-item" id="debug-api">API Connection: <span class="badge bg-warning">Checking...</span></div>
+            <div class="debug-item" id="debug-dom">DOM Elements: <span class="badge bg-warning">Checking...</span></div>
+            <div class="debug-item" id="debug-auth">Authentication: <span class="badge bg-warning">Checking...</span></div>
+        </div>
+        <button id="debug-refresh" class="btn btn-sm btn-outline-danger">Refresh Debug Info</button>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="text-center">
+        <div class="spinner-border loading-spinner" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading application...</p>
+    </div>
+
+    <!-- Fallback content if JS fails -->
+    <div id="fallback-content" class="container">
+        <div class="alert alert-warning">
+            <h4>JavaScript may not be working properly</h4>
+            <p>If you're seeing this message, there might be an issue with JavaScript on this page.</p>
+            <a href="/error" class="btn btn-primary">Go to Diagnostic Page</a>
+        </div>
+    </div>
+    
+    <div class="container" id="main-container" style="display: none;">
+        <header class="py-4 mb-4 border-bottom">
+            <h1 class="text-center">Personal AI Agent</h1>
+            <p class="text-center text-muted">Your private document assistant</p>
+        </header>
+
+        <div id="login-section" class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Login</div>
+                    <div class="card-body">
+                        <form id="login-form">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="button" id="register-btn" class="btn btn-link">Register</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="register-section" class="row justify-content-center mb-4" style="display: none;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Register</div>
+                    <div class="card-body">
+                        <form id="register-form">
+                            <div class="mb-3">
+                                <label for="reg-email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="reg-email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="reg-username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="reg-username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="reg-password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="reg-password" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">Register</button>
+                            <button type="button" id="back-to-login" class="btn btn-link">Back to Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-section" style="display: none;">
+            <div class="d-flex justify-content-end mb-2">
+                <button id="logout-btn" class="btn btn-outline-secondary">Logout</button>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📄 Upload PDF Document</div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <small>
+                                    <strong>PDF Processing:</strong> Upload PDF documents for intelligent categorization:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>Financial:</strong> Bank statements, invoices (precise transaction matching)</li>
+                                        <li><strong>Long-form:</strong> 50+ page documents, research papers (deep analysis)</li>
+                                        <li><strong>Generic:</strong> Resumes, letters (balanced processing)</li>
+                                    </ul>
+                                </small>
+                            </div>
+                            <form id="upload-form">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" placeholder="Brief description of the PDF content"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="document" class="form-label">PDF Document</label>
+                                    <input type="file" class="form-control" id="document" accept=".pdf" required>
+                                    <div class="form-text">Only PDF files are supported (Max: 10MB)</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Upload PDF</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📚 Your PDF Documents</div>
+                        <div class="card-body">
+                            <div class="mb-2 text-muted small">
+                                Documents are automatically categorized for optimal processing
+                            </div>
+                            <div id="documents-list" class="list-group">
+                                <!-- PDF documents will be loaded here with category badges -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gmail Email Management Section -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📧 Gmail Integration</div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <small>
+                                    <strong>Email Processing:</strong> Connect your Gmail to search and query your emails:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>Business:</strong> Work emails, meetings, projects</li>
+                                        <li><strong>Personal:</strong> Family, friends, personal communications</li>
+                                        <li><strong>Promotional:</strong> Newsletters, marketing emails</li>
+                                        <li><strong>Transactional:</strong> Receipts, confirmations, notifications</li>
+                                    </ul>
+                                </small>
+                            </div>
+                            
+                            <div id="gmail-status">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>Gmail Status:</span>
+                                    <span id="gmail-connection-status" class="badge bg-warning">Not Connected</span>
+                                </div>
+                                
+                                <div id="gmail-not-connected" class="text-center">
+                                    <p class="text-muted">Connect your Gmail account to search and analyze your emails</p>
+                                    <button id="connect-gmail-btn" class="btn btn-success">
+                                        <i class="fas fa-envelope"></i> Connect Gmail
+                                    </button>
+                                </div>
+                                
+                                <div id="gmail-connected" style="display: none;">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Account: <span id="gmail-account-email"></span></span>
+                                            <button id="disconnect-gmail-btn" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Total Emails: <span id="gmail-total-emails">0</span></span>
+                                            <span>Unread: <span id="gmail-unread-emails">0</span></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted">Last sync: <span id="gmail-last-sync">Never</span></small>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button id="sync-emails-btn" class="btn btn-primary">
+                                            <i class="fas fa-sync"></i> Sync Emails
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">📨 Email Search</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="email-search-query" class="form-label">Search Emails</label>
+                                <input type="text" class="form-control" id="email-search-query" placeholder="Search emails by content, sender, or subject">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-type-filter" class="form-label">Email Type</label>
+                                    <select class="form-control" id="email-type-filter">
+                                        <option value="">All Types</option>
+                                        <option value="business">Business</option>
+                                        <option value="personal">Personal</option>
+                                        <option value="promotional">Promotional</option>
+                                        <option value="transactional">Transactional</option>
+                                        <option value="support">Support</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-sender-filter" class="form-label">Sender</label>
+                                    <input type="email" class="form-control" id="email-sender-filter" placeholder="Filter by sender email">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-date-from" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="email-date-from">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-date-to" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="email-date-to">
+                                </div>
+                            </div>
+                            
+                            <button id="search-emails-btn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search Emails
+                            </button>
+                            
+                            <div id="email-search-results" class="mt-3" style="display: none;">
+                                <h6>Search Results:</h6>
+                                <div id="email-results-list" class="list-group">
+                                    <!-- Email search results will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">Ask a Question</div>
+                        <div class="card-body">
+                            <form id="query-form">
+                                <div class="mb-3">
+                                    <label for="source-select" class="form-label">Source</label>
+                                    <select class="form-control" id="source-select">
+                                        <option value="">All Sources</option>
+                                        <!-- Options will be loaded here -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="question" class="form-label">Your Question</label>
+                                    <textarea class="form-control" id="question" rows="3" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Ask</button>
+                            </form>
+                            <div id="answer-container" class="mt-4" style="display: none;">
+                                <h5>Answer:</h5>
+                                <div id="answer" class="p-3 bg-light rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">💬 Chat History</div>
+                        <div class="card-body">
+                            <div class="mb-2 text-muted small">
+                                Previous conversations with your AI assistant
+                            </div>
+                            <div id="chat-history" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Chat history will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">Query History</div>
+                        <div class="card-body">
+                            <div id="queries-list">
+                                <!-- Query history will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple script to show fallback content if main script fails to load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // If main container is still hidden after 3 seconds, show fallback
+                if (document.getElementById('main-container').style.display === 'none') {
+                    document.getElementById('fallback-content').style.display = 'block';
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 3000);
+        });
+    </script>
+    <script src="/static/js/app.js?v=3&t=1720574400"></script>
+    <script>
+        console.log("Inline script executed");
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM loaded from inline script");
+            
+            // Hide loading, show main container
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            
+            // Debug functions
+            function updateDebugInfo() {
+                // Check JavaScript
+                document.querySelector('#debug-js .badge').className = 'badge bg-success';
+                document.querySelector('#debug-js .badge').textContent = 'Working';
+                
+                // Check DOM
+                const domStatus = document.querySelector('#debug-dom .badge');
+                try {
+                    const loginSection = document.getElementById('login-section');
+                    const registerSection = document.getElementById('register-section');
+                    const appSection = document.getElementById('app-section');
+                    
+                    if (loginSection && registerSection && appSection) {
+                        domStatus.className = 'badge bg-success';
+                        domStatus.textContent = 'All Elements Found';
+                    } else {
+                        domStatus.className = 'badge bg-danger';
+                        domStatus.textContent = 'Missing Elements';
+                    }
+                } catch (e) {
+                    domStatus.className = 'badge bg-danger';
+                    domStatus.textContent = 'Error: ' + e.message;
+                }
+                
+                // Check API
+                const apiStatus = document.querySelector('#debug-api .badge');
+                fetch('/api/health-check')
+                    .then(response => {
+                        if (response.ok) {
+                            apiStatus.className = 'badge bg-success';
+                            apiStatus.textContent = 'Connected';
+                        } else {
+                            apiStatus.className = 'badge bg-danger';
+                            apiStatus.textContent = 'Error: ' + response.status;
+                        }
+                    })
+                    .catch(error => {
+                        apiStatus.className = 'badge bg-danger';
+                        apiStatus.textContent = 'Failed: ' + error.message;
+                    });
+                
+                // Check Auth
+                const authStatus = document.querySelector('#debug-auth .badge');
+                const token = localStorage.getItem('token');
+                if (token) {
+                    authStatus.className = 'badge bg-success';
+                    authStatus.textContent = 'Token Found';
+                } else {
+                    authStatus.className = 'badge bg-warning';
+                    authStatus.textContent = 'No Token';
+                }
+            }
+            
+            // Run debug checks
+            updateDebugInfo();
+            
+            // Add refresh button handler
+            document.getElementById('debug-refresh').addEventListener('click', updateDebugInfo);
+        });
+    </script>
+</body>
+</html> 

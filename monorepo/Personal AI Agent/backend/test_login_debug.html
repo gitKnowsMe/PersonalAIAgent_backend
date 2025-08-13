@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Debug Test</title>
+</head>
+<body>
+    <h1>Login Debug Test</h1>
+    <form id="loginForm">
+        <div>
+            <label>Username: <input type="text" id="username" value="gmail_tester"></label>
+        </div>
+        <div>
+            <label>Password: <input type="password" id="password" value="Iomaguire1"></label>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('Attempting login with:', { username, password });
+                
+                const response = await fetch('http://localhost:8000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'username': username,
+                        'password': password
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    resultDiv.innerHTML = `<div style="color: green;">✅ LOGIN SUCCESS!<br>Token: ${data.access_token.substring(0, 50)}...</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: red;">❌ LOGIN FAILED!<br>Status: ${response.status}<br>Response: ${responseText}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = `<div style="color: red;">❌ ERROR: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

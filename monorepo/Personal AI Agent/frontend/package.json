@@ -1,0 +1,55 @@
+{
+  "name": "personal-ai-agent-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Personal AI Agent - Hybrid deployment architecture",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "14.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@types/node": "^20.8.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.2.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.292.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-separator": "^1.0.3",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-toast": "^1.1.5",
+    "class-variance-authority": "^0.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.52.0",
+    "eslint-config-next": "14.0.3",
+    "@types/eslint": "^8.44.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "nextjs",
+    "typescript",
+    "tailwind",
+    "personal-assistant",
+    "hybrid-deployment"
+  ],
+  "author": "Personal AI Agent Team",
+  "license": "MIT"
+}
